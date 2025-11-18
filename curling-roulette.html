@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>컬링 룰렛 - 음식 선택 (재구현)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; font-size: 2.2em; }
+
+        .curling-area {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            background:
+                radial-gradient(120% 100% at 50% 0%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%),
+                repeating-linear-gradient(90deg, rgba(255,255,255,0.35) 0 2px, rgba(255,255,255,0.25) 2px 6px),
+                linear-gradient(to bottom, #e8f4f8 0%, #c8e6f0 100%);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 3px solid #4a90e2;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .ice-surface { position: relative; width: 100%; height: 100%; overflow: hidden; }
+        .track { position: absolute; inset: 0; }
+
+        .center-line {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 2px;
+            height: 100%;
+            background: rgba(255, 0, 0, 0.35);
+            transform: translateX(-50%);
+            z-index: 60;
+            pointer-events: none;
+        }
+
+        .curling-stone {
+            position: absolute;
+            width: 90px; height: 90px;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #c0c0c0);
+            border-radius: 50%;
+            border: 5px solid #888;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35), inset 0 2px 6px rgba(255, 255, 255, 0.6);
+            z-index: 80;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .items-rail {
+            position: absolute;
+            left: 0;
+            top: 20%;
+            height: 200px;
+            transform: translateY(-50%);
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            pointer-events: none;
+        }
+        .lanes { position: relative; width: 100%; height: 100%; }
+        .moving-layer { position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+        .items-wrapper { display: flex; align-items: center; gap: 10px; will-change: transform; }
+
+        .food-item {
+            width: 160px;
+            padding: 18px 20px;
+            background: white;
+            border-radius: 18px;
+            border: 3px solid #e0e0e0;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.18);
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+        .food-item.selected {
+            background: #ff6b6b; color: #fff; border-color: #ff5252;
+            transform: scale(1.1);
+            box-shadow: 0 14px 32px rgba(255, 107, 107, 0.6);
+            z-index: 70;
+        }
+
+        .controls { text-align: center; margin-top: 30px; display: flex; gap: 12px; justify-content: center; align-items: center; }
+        .btn {
+            padding: 15px 40px; font-size: 18px; font-weight: bold; color: white;
+            border: none; border-radius: 50px; cursor: pointer; transition: all 0.3s ease;
+        }
+        .throw-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+        .throw-btn:hover { transform: translateY(-2px); box-shadow: 0 7px 20px rgba(102, 126, 234, 0.6); }
+        .throw-btn:active { transform: translateY(0); }
+        .throw-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .restart-btn { background: linear-gradient(135deg, #888 0%, #666 100%); box-shadow: 0 5px 15px rgba(120,120,120,0.35); display: none; }
+        .restart-btn:hover { transform: translateY(-2px); box-shadow: 0 7px 20px rgba(120,120,120,0.5); }
+
+        .result {
+            text-align: center; margin-top: 20px; font-size: 24px; font-weight: bold; color: #ff6b6b;
+            min-height: 40px; opacity: 0; transition: opacity 0.5s ease;
+        }
+        .result.show { opacity: 1; }
+    </style>
+    </head>
+<body>
+    <div class="container">
+        <h1>🍽️ 컬링 룰렛 - 음식 선택</h1>
+
+        <div class="curling-area">
+           <div class="ice-surface" id="ice">
+               <div class="track">
+                   <div class="center-line" id="centerLine"></div>
+                   <div class="lanes">
+                       <div class="moving-layer" style="top:20%">
+                           <div class="items-wrapper" id="itemsWrapper"></div>
+                       </div>
+                   </div>
+                   <div class="curling-stone" id="curlingStone"></div>
+               </div>
+           </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn throw-btn" id="throwBtn">컬링 던지기</button>
+            <button class="btn restart-btn" id="restartBtn">다시하기</button>
+        </div>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        const foods = [
+            '🍕 피자', '🍔 햄버거', '🍜 라면', '🍱 도시락', '🍣 초밥',
+            '🍖 고기', '🍗 치킨', '🍝 파스타', '🥘 찜닭', '🍲 부대찌개',
+            '🍛 카레', '🥗 샐러드', '🍤 탕수육', '🥟 만두', '🍙 김밥',
+            '🌮 타코', '🍳 오므라이스', '🥪 샌드위치', '🍞 빵', '🍰 케이크'
+        ];
+        const itemsWrapper = document.getElementById('itemsWrapper');
+        const throwBtn = document.getElementById('throwBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const result = document.getElementById('result');
+
+        const CYCLES = 100;
+        const ITEM_WIDTH = 160;
+        const GAP = 10;
+        const ITEM_SPAN = ITEM_WIDTH + GAP;
+
+        function createOneCycle() {
+            const frag = document.createDocumentFragment();
+            foods.forEach((food) => {
+                const el = document.createElement('div');
+                el.className = 'food-item';
+                el.textContent = food;
+                frag.appendChild(el);
+            });
+            itemsWrapper.appendChild(frag);
+        }
+        for (let i = 0; i < CYCLES; i++) createOneCycle();
+
+        let positionX = 0; let velocity = 0; let animId = null; let isThrowing = false; let hasSelected = false; let audioCtx = null;
+        function ensureAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+        function playClick() {
+            const ctx = ensureAudio();
+            const len = Math.floor(0.015 * ctx.sampleRate);
+            const buf = ctx.createBuffer(1, len, ctx.sampleRate); const data = buf.getChannelData(0);
+            for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (len / 5));
+            const src = ctx.createBufferSource(); src.buffer = buf;
+            const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1600; hp.Q.value = 0.8;
+            const g = ctx.createGain(); g.gain.value = 0.18;
+            src.connect(hp).connect(g).connect(ctx.destination); src.start();
+        }
+        function playWin() {
+            const ctx = ensureAudio(); const freqs = [523.25, 659.25, 783.99];
+            freqs.forEach((f, i) => { const o = ctx.createOscillator(); const g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.05); g.gain.value = 0.0; o.connect(g).connect(ctx.destination); const t0 = ctx.currentTime + i * 0.05; g.gain.linearRampToValueAtTime(0.22, t0 + 0.03); g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.4); o.start(t0); o.stop(t0 + 0.45); });
+        }
+
+        function showRestart(show) { restartBtn.style.display = show ? 'inline-block' : 'none'; }
+        function reset() { cancelAnimationFrame(animId); isThrowing = false; hasSelected = false; throwBtn.disabled = false; showRestart(false); result.classList.remove('show'); result.textContent = ''; positionX = 0; velocity = 0; lastTickIndex = -1; itemsWrapper.style.transform = `translateX(0px)`; itemsWrapper.querySelectorAll('.food-item').forEach(el => el.classList.remove('selected')); }
+
+        let lastTickIndex = -1;
+        function startThrow() {
+            if (isThrowing || hasSelected) return; isThrowing = true; throwBtn.disabled = true;
+            const minV = 2000, maxV = 4000; velocity = Math.random() * (maxV - minV) + minV; const friction = 0.992; const stopThreshold = 10;
+            let lastTs = performance.now();
+            const animate = (ts) => {
+                const dt = (ts - lastTs) / 1000; lastTs = ts; positionX += velocity * dt; const tx = `translateX(${-positionX}px)`; itemsWrapper.style.transform = tx;
+                const tickIndex = Math.floor(positionX / ITEM_SPAN); if (tickIndex > lastTickIndex) { playClick(); lastTickIndex = tickIndex; }
+                velocity *= friction; if (velocity < stopThreshold) { cancelAnimationFrame(animId); finalizeSelection(); return; }
+                animId = requestAnimationFrame(animate);
+            }; animId = requestAnimationFrame(animate);
+        }
+
+        function finalizeSelection() {
+            const centerX = window.innerWidth / 2; let closest = null; let minDist = Infinity;
+            itemsWrapper.querySelectorAll('.food-item').forEach(el => { const r = el.getBoundingClientRect(); const c = r.left + r.width / 2; const d = Math.abs(c - centerX); if (d < minDist) { minDist = d; closest = el; } });
+            if (closest) { closest.classList.add('selected'); result.textContent = `선택된 음식: ${closest.textContent}`; result.classList.add('show'); }
+            playWin(); hasSelected = true; showRestart(true);
+        }
+
+        throwBtn.addEventListener('click', startThrow); restartBtn.addEventListener('click', reset); reset();
+    </script>
+</body>
+</html>
