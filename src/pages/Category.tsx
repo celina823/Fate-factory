@@ -1,16 +1,29 @@
 import { useState } from "react";
 import "./Category.css";
+import LogoImg from "../assets/ff-logo-img.png";
+import { useRouletteItemsStore } from "../stores/useRouletteItemsStore";
 
 export default function Category() {
-  const [items, setItems] = useState<string[]>([]);
   const [input, setInput] = useState("");
+  const { items, addItem, addPresets, clearItems } = useRouletteItemsStore();
+
+  const handleCategoryClick = (label: string) => {
+    const preset = categoryPresets[label];
+    if (!preset) return;
+
+    clearItems();
+    addPresets(preset);
+  };
 
   // 항목 "추가" 버튼 클릭 또는 Enter 입력 시 호출되는 함수
   const handleAdd = () => {
-    // 공백 제거 (앞뒤 공백 삭제)
     const trimmed = input.trim();
     if (!trimmed) return;
-    setItems((prev) => [...prev, trimmed]);
+    addItem(trimmed); // 전역 상태에 추가
+
+    const currentItems = useRouletteItemsStore.getState().items;
+    console.log("🟢 zustand items after add:", currentItems);
+
     setInput("");
   };
 
@@ -22,21 +35,15 @@ export default function Category() {
 
   return (
     <div className="ff-page">
+      <img src={LogoImg} alt="Fate Factory Logo" className="ff-logo-img" />
       <div className="ff-shell">
-        {/* 헤더 */}
-        <header className="ff-header">
-          <div className="ff-logo">
-            <div className="ff-logo-mark">❓</div>
-            <span className="ff-logo-text">Fate factory</span>
-          </div>
-        </header>
-
         {/* 모드 탭 */}
         <h2>룰렛 모드</h2>
         <nav className="ff-mode-tabs">
           <button className="ff-mode-btn ff-mode-btn--active">원형 룰렛</button>
           <button className="ff-mode-btn">텍스트 아레나</button>
           <button className="ff-mode-btn">컬링</button>
+          <button className="ff-mode-btn">팩맨</button>
           <button className="ff-mode-btn">사다리타기</button>
         </nav>
 
@@ -75,7 +82,11 @@ export default function Category() {
               <h3 className="ff-section-title">인기 카테고리</h3>
               <div className="ff-hot-chip-grid">
                 {popularCategories.map((c) => (
-                  <button key={c.label} className="ff-chip">
+                  <button
+                    key={c.label}
+                    className="ff-chip"
+                    onClick={() => handleCategoryClick(c.label)}
+                  >
                     <span className="ff-chip-emoji">{c.emoji}</span>
                     <span>{c.label}</span>
                   </button>
@@ -87,7 +98,11 @@ export default function Category() {
               <h3 className="ff-section-title">카테고리</h3>
               <div className="ff-chip-grid--4">
                 {otherCategories.map((c) => (
-                  <button key={c.label} className="ff-chip">
+                  <button
+                    key={c.label}
+                    className="ff-chip"
+                    onClick={() => handleCategoryClick(c.label)}
+                  >
                     <span className="ff-chip-emoji">{c.emoji}</span>
                     <span className="ff-chip-label">{c.label}</span>
                   </button>
@@ -133,3 +148,57 @@ const otherCategories = [
   { emoji: "💢", label: "기분 뭐하지" },
   { emoji: "❓", label: "뭐 고르지" },
 ];
+
+const categoryPresets: Record<string, string[]> = {
+  "밥 뭐먹지": ["김치찌개", "제육볶음", "파스타", "비빔밥", "햄버거"],
+
+  "음료 뭐마시지": [
+    "아메리카노",
+    "바닐라라떼",
+    "녹차",
+    "홍시주스",
+    "망고스무디",
+  ],
+
+  "넷플 뭐보지": ["로맨스", "코미디", "스릴러", "다큐", "애니메이션"],
+
+  "유튜브 뭐보지": ["브이로그", "요리 채널", "게임 스트리밍", "먹방", "ASMR"],
+
+  "보드게임\n뭐하지": ["할리갈리", "스플렌더", "루미큐브", "뱅", "부루마블"],
+
+  "게임 뭐하지": ["롤", "배그", "발로란트", "스타듀밸리", "오버워치"],
+
+  "옷 뭐입지": ["후드티", "정장", "셔츠", "원피스", "베스트"],
+
+  "음악 뭐듣지": ["팝", "발라드", "힙합", "R&B", "OST"],
+
+  "책 뭐읽지": ["소설", "자기계발", "판타지", "에세이", "추리"],
+
+  "술 뭐마시지": ["맥주", "소주", "와인", "칵테일", "막걸리"],
+
+  "국내여행\n어디가지": ["부산", "강릉", "여수", "제주", "속초"],
+
+  "해외여행\n어디가지": ["일본", "대만", "태국", "유럽", "미국"],
+
+  "간식 뭐먹지": ["쿠키", "아이스크림", "초콜릿", "과자", "빵"],
+
+  "네일 뭐하지": ["프렌치", "글리터", "자석젤", "체크", "그라데이션"],
+
+  "라면 뭐먹지": ["진라면", "신라면", "불닭볶음면", "너구리", "짜파게티"],
+
+  "집안일\n뭐부터 하지": [
+    "설거지",
+    "빨래",
+    "청소기 돌리기",
+    "먼지닦기",
+    "휴지통 비우기",
+  ],
+
+  "운동 뭐하지": ["러닝", "홈트", "요가", "필라테스", "웨이트"],
+
+  "공부 뭐하지": ["토익", "개발 공부", "자격증", "독서", "필기정리"],
+
+  "기분 뭐하지": ["여유로움", "활기참", "즐거움", "편안함", "신남"],
+
+  "뭐 고르지": [],
+};

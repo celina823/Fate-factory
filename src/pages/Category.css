@@ -15,6 +15,7 @@
 }
 
 body {
+  font-size: 1.4rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -25,7 +26,7 @@ body {
 /* 페이지 전체 래퍼 */
 .ff-page {
   min-height: 100vh;
-  display: flex;
+  display: flex-col;
   justify-content: center;
   align-items: center;
   padding: 40px 16px;
@@ -44,7 +45,7 @@ body {
 /* 헤더 */
 .ff-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-bottom: 24px;
 }
@@ -67,7 +68,7 @@ body {
 }
 
 .ff-logo-text {
-  font-size: 28px;
+  font-size: 64px;
   font-weight: 700;
   color: var(--dark);
 }
@@ -85,14 +86,14 @@ body {
 }
 
 .ff-mode-btn {
-  width: 155px;
+  width: 180px;
   height: 50px;
   border: none;
   outline: none;
   padding: 10px 18px;
   border-radius: 999px;
   background: #ffffff;
-  font-size: 14px;
+  /* font-size: 14px; */
   cursor: pointer;
   transition: background 0.15s, transform 0.05s;
   color: var(--dark);
@@ -105,10 +106,6 @@ body {
   outline: none;
   background: var(--pastel-200);
   font-weight: 600;
-}
-
-.ff-mode-btn:hover {
-  background: var(--pastel-200);
 }
 
 /* 메인 영역 */
@@ -130,7 +127,7 @@ body {
 .ff-left-title {
   margin: 0 0 10px;
   color: var(--dark);
-  font-size: 16px;
+  /* font-size: 16px; */
   font-weight: 600;
 }
 
@@ -145,7 +142,7 @@ body {
   padding: 8px 10px;
   border-radius: 10px;
   border: 1px solid #d0dbe3;
-  font-size: 14px;
+  /* font-size: 14px; */
 }
 
 .ff-add-btn {
@@ -153,7 +150,7 @@ body {
   border-radius: 10px;
   border: none;
   background: #ffd75e;
-  font-size: 14px;
+  /* font-size: 14px; */
   cursor: pointer;
 }
 
@@ -173,12 +170,12 @@ body {
   padding: 6px 8px;
   border-radius: 8px;
   background: #eef5fb;
-  font-size: 13px;
+  /* font-size: 13px; */
   margin-bottom: 4px;
 }
 
 .ff-item-empty {
-  font-size: 13px;
+  /* font-size: 13px; */
   color: #8b9eb4;
 }
 
@@ -191,7 +188,7 @@ body {
 
 .ff-section-title {
   margin: 0 0 8px;
-  font-size: 14px;
+  /* font-size: 14px; */
   color: #808080;
 }
 
@@ -214,13 +211,13 @@ body {
   border: none;
   outline: none;
   padding: 10px 16px;
-  border-radius: 20px;
+  border-radius: 12px;
   background: var(--light);
   color: var(--dark);
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
+  /* font-size: 14px; */
   cursor: pointer;
   box-shadow: 0 2px 5px rgba(99, 132, 160, 0.18);
   transition: transform 0.05s, box-shadow 0.1s, background 0.15s;
@@ -237,7 +234,7 @@ body {
 }
 
 .ff-chip-emoji {
-  font-size: 16px;
+  /* font-size: 16px; */
 }
 
 .ff-chip-label {
