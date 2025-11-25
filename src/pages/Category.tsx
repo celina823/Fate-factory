@@ -1,19 +1,24 @@
 import { useState } from "react";
 import "./Category.css";
+import LogoImg from "../assets/ff-logo-img.png";
+import { useRouletteItemsStore } from "../stores/useRouletteItemsStore";
 
 export default function Category() {
-  const [items, setItems] = useState<string[]>([]);
   const [input, setInput] = useState("");
+  const { items, addItem } = useRouletteItemsStore();
 
   // 항목 "추가" 버튼 클릭 또는 Enter 입력 시 호출되는 함수
   const handleAdd = () => {
-    // 공백 제거 (앞뒤 공백 삭제)
     const trimmed = input.trim();
     if (!trimmed) return;
-    setItems((prev) => [...prev, trimmed]);
+    addItem(trimmed); // 전역 상태에 추가
+
+    // ✅ 실제로 항목이 추가된 직후에만 로그 찍기
+    const currentItems = useRouletteItemsStore.getState().items;
+    console.log("🟢 zustand items after add:", currentItems);
+
     setInput("");
   };
-
   const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
     if (e.key === "Enter") {
       handleAdd();
@@ -22,21 +27,15 @@ export default function Category() {
 
   return (
     <div className="ff-page">
+      <img src={LogoImg} alt="Fate Factory Logo" className="ff-logo-img" />
       <div className="ff-shell">
-        {/* 헤더 */}
-        <header className="ff-header">
-          <div className="ff-logo">
-            <div className="ff-logo-mark">❓</div>
-            <span className="ff-logo-text">Fate factory</span>
-          </div>
-        </header>
-
         {/* 모드 탭 */}
         <h2>룰렛 모드</h2>
         <nav className="ff-mode-tabs">
           <button className="ff-mode-btn ff-mode-btn--active">원형 룰렛</button>
           <button className="ff-mode-btn">텍스트 아레나</button>
           <button className="ff-mode-btn">컬링</button>
+          <button className="ff-mode-btn">팩맨</button>
           <button className="ff-mode-btn">사다리타기</button>
         </nav>
 
