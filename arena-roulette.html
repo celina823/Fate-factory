@@ -1,0 +1,1961 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation Arena Roulette</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap');
+
+        :root {
+            --bg-color: #0f172a;
+            --accent-color: #38bdf8;
+            --text-color: #e2e8f0;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-color);
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #character-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 280px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            pointer-events: auto;
+        }
+
+        .character-card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 8px 10px;
+            margin-bottom: 4px;
+            transition: all 0.3s;
+        }
+
+        .character-card.alive {
+            border-left: 3px solid #22c55e;
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .character-card.dead {
+            opacity: 0.4;
+            border-left: 3px solid #ef4444;
+            background: rgba(15, 23, 42, 0.5);
+            text-decoration: line-through;
+        }
+
+        .character-card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .character-color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .character-card.dead .character-color-dot {
+            opacity: 0.3;
+        }
+
+        .character-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+            flex: 1;
+        }
+
+        .character-card.dead .character-name {
+            color: rgba(226, 232, 240, 0.4);
+        }
+
+        .character-hp {
+            font-size: 0.8rem;
+            color: rgba(226, 232, 240, 0.9);
+        }
+
+        .character-card.dead .character-hp {
+            color: rgba(226, 232, 240, 0.3);
+        }
+
+        .stat-bar {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .hp-bar {
+            background: #22c55e;
+        }
+
+        .hp-bar.medium {
+            background: #f59e0b;
+        }
+
+        .hp-bar.low {
+            background: #ef4444;
+        }
+
+        .stat-bar {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .hp-bar {
+            background: #22c55e;
+        }
+
+        .hp-bar.low {
+            background: #ef4444;
+        }
+
+        #character-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #character-panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        #character-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        #minimap {
+            position: absolute;
+            top: 20px;
+            right: 310px;
+            width: 200px;
+            height: 200px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            pointer-events: none;
+        }
+
+        #minimap canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        .shared-panel {
+            margin-top: 12px;
+            pointer-events: auto;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .shared-panel button {
+            border-radius: 6px;
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            background: rgba(56, 189, 248, 0.2);
+            color: var(--accent-color);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+
+        #stats {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        #winner-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            z-index: 100;
+        }
+
+        #winner-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .winner-card {
+            text-align: center;
+            padding: 40px;
+            transform: scale(0.8);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        #winner-overlay.active .winner-card {
+            transform: scale(1);
+        }
+
+        .winner-title {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #facc15, #f59e0b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.5));
+        }
+
+        .winner-name {
+            font-size: 4rem;
+            font-weight: 800;
+            margin: 0;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="ui-layer">
+        <div class="glass-panel">
+            <h1>Simulation Arena</h1>
+            <div id="stats">생존자: 20 | 시간: 0초</div>
+        </div>
+        <div id="shared-panel" class="glass-panel shared-panel">
+            <button id="goHubBtn" type="button">카테고리로 돌아가기</button>
+        </div>
+    </div>
+
+    <div id="minimap">
+        <canvas id="minimapCanvas"></canvas>
+    </div>
+
+    <div id="character-panel" class="glass-panel">
+        <h2 style="margin: 0 0 12px 0; font-size: 1.1rem; color: var(--accent-color);">캐릭터 상태</h2>
+        <div id="character-list"></div>
+    </div>
+
+    <div id="winner-overlay">
+            <div class="glass-panel winner-card">
+                <div class="winner-title">승리</div>
+                <h2 class="winner-name" id="winner-name">이름</h2>
+                <p>마지막 생존자</p>
+                <button onclick="location.reload()"
+                    style="margin-top: 20px; padding: 10px 20px; background: var(--accent-color); border: none; border-radius: 6px; color: #0f172a; font-weight: bold; cursor: pointer;">다시하기</button>
+            </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        // --- Configuration ---
+        const MIN_CHARACTER_COUNT = 4;
+        const DEFAULT_CHARACTER_NAMES = ['용사', '마법사', '궁수', '전사', '도적', '성기사', '사제', '흑마법사', '드루이드', '주술사', '암살자', '검투사', '창기사', '마법검사', '사냥꾼', '수호자', '파괴자', '치유사', '소환사', '기사'];
+        let CHARACTER_NAMES = [...DEFAULT_CHARACTER_NAMES];
+        const TERRAIN_FEATURES = [
+            { type: 'circle', x: -1200, y: -800, radius: 250, color: 'rgba(15, 52, 96, 0.6)' },
+            { type: 'circle', x: 900, y: -600, radius: 300, color: 'rgba(35, 78, 112, 0.5)' },
+            { type: 'rect', x: -500, y: 600, width: 600, height: 200, color: 'rgba(29, 53, 87, 0.5)' },
+            { type: 'rect', x: 700, y: 700, width: 400, height: 250, color: 'rgba(17, 24, 39, 0.45)' }
+        ];
+
+        const CONFIG = {
+            entityCount: CHARACTER_NAMES.length,
+            initialItemCount: 15, // 초기 아이템 수를 늘려 초반 자원 강화
+            mapRadius: 5000, // 원형 맵 반경 (훨씬 크게)
+            safeZone: {
+                startDelay: 30, // 자기장 시작 지연 시간 (초)
+                initialRadius: 4500, // 초기 자기장 반경
+                shrinkRate: 2.0, // 초당 좁혀지는 비율 (훨씬 더 빨리)
+                damagePerSecond: 5 // 자기장 밖 데미지
+            },
+            colors: [
+                '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981',
+                '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef',
+                '#f43f5e', '#fb7185', '#e879f9', '#a78bfa', '#818cf8',
+                '#60a5fa', '#38bdf8', '#2dd4bf', '#34d399', '#a3e635'
+            ]
+        };
+
+        // --- Utils ---
+        const random = (min, max) => Math.random() * (max - min) + min;
+        const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+        const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+
+        // --- Sound System ---
+        class SoundManager {
+            constructor() {
+                this.audioContext = null;
+                this.masterVolume = 0.4;
+                this.initialized = false;
+                this.init();
+            }
+
+            init() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    // 사용자 인터랙션 후 오디오 컨텍스트 활성화
+                    document.addEventListener('click', () => this.resumeAudio(), { once: true });
+                    document.addEventListener('keydown', () => this.resumeAudio(), { once: true });
+                } catch (e) {
+                    console.log('Audio not supported');
+                }
+            }
+
+            async resumeAudio() {
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    try {
+                        await this.audioContext.resume();
+                        this.initialized = true;
+                    } catch (e) {
+                        console.log('Audio resume failed');
+                    }
+                }
+            }
+
+            playTone(frequency, duration, type = 'sine', volume = 0.1) {
+                if (!this.audioContext) return;
+
+                // 오디오 컨텍스트가 suspended 상태면 resume 시도
+                if (this.audioContext.state === 'suspended') {
+                    this.resumeAudio();
+                    return;
+                }
+
+                try {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+
+                    oscillator.frequency.value = frequency;
+                    oscillator.type = type;
+
+                    gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(volume * this.masterVolume, this.audioContext.currentTime + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + duration);
+                } catch (e) {
+                    // 사운드 재생 실패 시 무시
+                }
+            }
+
+            playAttack() {
+                this.playTone(400, 0.1, 'square', 0.15);
+            }
+
+            playHit() {
+                this.playTone(200, 0.15, 'sawtooth', 0.2);
+            }
+
+            playDeath() {
+                const freq = 150;
+                this.playTone(freq, 0.3, 'sawtooth', 0.25);
+                setTimeout(() => this.playTone(freq * 0.5, 0.2, 'sawtooth', 0.2), 100);
+            }
+
+            playItemPickup() {
+                this.playTone(600, 0.1, 'sine', 0.15);
+                setTimeout(() => this.playTone(800, 0.1, 'sine', 0.15), 50);
+            }
+
+            playKill() {
+                this.playTone(500, 0.1, 'square', 0.2);
+                setTimeout(() => this.playTone(700, 0.1, 'square', 0.2), 50);
+                setTimeout(() => this.playTone(900, 0.1, 'square', 0.2), 100);
+            }
+
+            playZoneDamage() {
+                this.playTone(150, 0.2, 'sawtooth', 0.15);
+            }
+
+            playZoneWarning() {
+                this.playTone(300, 0.3, 'sine', 0.1);
+            }
+
+            playCombatStart() {
+                this.playTone(400, 0.15, 'square', 0.18);
+                setTimeout(() => this.playTone(500, 0.1, 'square', 0.15), 50);
+            }
+
+            playMovement() {
+                // 배경음악 대신 미묘한 사운드
+                if (Math.random() < 0.01) {
+                    this.playTone(200 + Math.random() * 100, 0.05, 'sine', 0.05);
+                }
+            }
+        }
+
+        const soundManager = new SoundManager();
+        const ZUSTAND_STORAGE_KEY = 'roulette-items';
+        const goHubBtn = document.getElementById('goHubBtn');
+        let activeGame = null;
+
+        const sanitizeList = list => list.map(name => name.trim()).filter(Boolean);
+        const logShared = (message) => console.log(`[Arena] ${message}`);
+
+        function loadSharedItems(minRequired = MIN_CHARACTER_COUNT) {
+            try {
+                const raw = localStorage.getItem(ZUSTAND_STORAGE_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                // Zustand persist 형식: { state: { items: [...] } } 또는 직접 { items: [...] }
+                let items = null;
+                if (parsed.state && Array.isArray(parsed.state.items)) {
+                    items = parsed.state.items;
+                } else if (Array.isArray(parsed.items)) {
+                    items = parsed.items;
+                }
+                if (!items) return null;
+                const clean = sanitizeList(items);
+                return clean.length >= minRequired ? clean : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function applySharedCharacters(list, message) {
+            CHARACTER_NAMES = list.slice();
+            CONFIG.entityCount = CHARACTER_NAMES.length;
+            const preview = list.slice(0, 5).join(', ');
+            const suffix = list.length ? ` (예: ${preview}${list.length > 5 ? '…' : ''})` : '';
+            logShared(`${message}${suffix}`);
+        }
+
+        function useDefaultCharacters(message) {
+            CHARACTER_NAMES = DEFAULT_CHARACTER_NAMES.slice();
+            CONFIG.entityCount = CHARACTER_NAMES.length;
+            const preview = CHARACTER_NAMES.slice(0, 5).join(', ');
+            const suffix = CHARACTER_NAMES.length ? ` (예: ${preview}${CHARACTER_NAMES.length > 5 ? '…' : ''})` : '';
+            logShared(`${message}${suffix}`);
+        }
+
+        function hydrateCharacterList(options = { alertOnMissing: false, restart: false }) {
+            const shared = loadSharedItems();
+            if (shared) {
+                applySharedCharacters(shared, `카테고리 페이지에서 전달된 참가자 ${shared.length}명을 사용합니다.`);
+                if (options.restart) startSimulation();
+                return true;
+            }
+            if (options.alertOnMissing) {
+                alert('공유된 참가자 목록을 찾을 수 없습니다. 카테고리 페이지에서 항목을 설정해 주세요.');
+            }
+            useDefaultCharacters(`공유 항목이 없어 기본 참가자 ${DEFAULT_CHARACTER_NAMES.length}명을 사용합니다.`);
+            if (options.restart) startSimulation();
+            return false;
+        }
+
+        function startSimulation() {
+            if (activeGame && typeof activeGame.destroy === 'function') {
+                activeGame.destroy();
+            }
+            const statsEl = document.getElementById('stats');
+            if (statsEl) {
+                statsEl.innerText = `생존자: ${CONFIG.entityCount} | 시간: 0초`;
+            }
+            const winnerOverlay = document.getElementById('winner-overlay');
+            if (winnerOverlay) {
+                winnerOverlay.classList.remove('active');
+            }
+            activeGame = new Game();
+        }
+
+        if (goHubBtn) {
+            goHubBtn.addEventListener('click', () => {
+                window.location.href = '/';
+            });
+        }
+
+        // --- Classes ---
+        class Vector2 {
+            constructor(x, y) { this.x = x; this.y = y; }
+            add(v) { this.x += v.x; this.y += v.y; return this; }
+            sub(v) { this.x -= v.x; this.y -= v.y; return this; }
+            mult(n) { this.x *= n; this.y *= n; return this; }
+            mag() { return Math.sqrt(this.x * this.x + this.y * this.y); }
+            normalize() {
+                const m = this.mag();
+                if (m > 0) this.mult(1 / m);
+                return this;
+            }
+            copy() { return new Vector2(this.x, this.y); }
+        }
+
+        // --- Safe Zone Class ---
+        class SafeZone {
+            constructor() {
+                this.center = new Vector2(0, 0); // 맵 중심
+                this.radius = CONFIG.safeZone.initialRadius;
+                this.targetRadius = CONFIG.safeZone.initialRadius;
+                this.active = false; // 자기장 활성화 여부
+                this.startTime = 0;
+            }
+
+            update(game) {
+                // 자기장 시작 지연
+                if (!this.active && game.time >= CONFIG.safeZone.startDelay) {
+                    this.active = true;
+                    this.startTime = game.time;
+                }
+
+                if (!this.active) return;
+
+                // 생존자 수에 따라 자기장 크기 조정
+                const aliveCount = game.characters.filter(c => c.alive).length;
+                const progress = 1 - (aliveCount / CONFIG.entityCount);
+                
+                // 최소 반경 설정 (너무 작아지지 않도록)
+                const minRadius = 300;
+                const elapsed = game.time - this.startTime;
+                
+                // 시간에 따라 점진적으로 좁혀짐 (항상 줄어들도록)
+                // 100초에 걸쳐 0.7까지 좁혀짐
+                const timeShrink = Math.min(0.7, elapsed / 100);
+                // 생존자 수에 따라 추가로 최대 0.3까지 좁혀짐
+                const playerShrink = progress * 0.3;
+                
+                // 두 가지 요소를 결합하여 자기장 크기 결정 (최대 0.9까지 좁혀짐)
+                const totalShrink = Math.min(0.9, timeShrink + playerShrink);
+                this.targetRadius = Math.max(minRadius, CONFIG.safeZone.initialRadius * (1 - totalShrink));
+                
+                // 부드럽게 좁혀짐 (더 빠르게)
+                const shrinkSpeed = 0.15; // 고정된 속도로 빠르게
+                this.radius += (this.targetRadius - this.radius) * shrinkSpeed;
+            }
+
+            isInside(pos) {
+                if (!this.active) return true; // 자기장이 시작되기 전에는 항상 안전
+                const dist = distance(pos, this.center);
+                return dist <= this.radius;
+            }
+
+            draw(ctx) {
+                if (!this.active) return;
+
+                // 자기장 경계선
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 8;
+                ctx.setLineDash([10, 5]);
+                ctx.beginPath();
+                ctx.arc(this.center.x, this.center.y, this.radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // 자기장 외부 영역 표시
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.1)';
+                ctx.beginPath();
+                ctx.arc(this.center.x, this.center.y, this.radius + 50, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        class Camera {
+            constructor(width, height) {
+                this.x = 0;
+                this.y = 0;
+                this.width = width;
+                this.height = height;
+                this.zoom = 1.2; // 줌 약하게
+                this.targetZoom = 1.2;
+                this.focusTarget = null; // 포커스할 캐릭터
+                this.combatFocusTime = 0; // 전투 포커스 시간
+                this.combatEndTime = 0; // 전투 종료 후 유지 시간
+                this.focusChangeCooldown = 0; // 포커스 변경 쿨다운
+                this.currentFocusChar = null; // 현재 포커스 중인 캐릭터
+                this.isInCombat = false; // 전투 중 여부
+                this.viewRotationTimer = 0; // 뷰 순환 타이머
+                this.viewRotationInterval = 300; // 5초마다 뷰 변경 (60fps 기준)
+                this.viewRotationIndex = 0; // 현재 뷰 인덱스
+            }
+
+            update(targets, game) {
+                if (targets.length === 0) return;
+
+                // 전투 중인 캐릭터 찾기
+                let combatChars = [];
+                let hasActiveCombat = false;
+
+                targets.forEach(char => {
+                    // 공격 상태이거나 추격 중이고 타겟이 살아있을 때
+                    if ((char.state === 'attack' || char.state === 'chase') && char.target && char.target.alive) {
+                        const dist = distance(char.pos, char.target.pos);
+                        if (dist < 400) { // 거리 조건
+                            combatChars.push(char);
+                            hasActiveCombat = true;
+                        }
+                    }
+                });
+
+                // 전투 상태 업데이트
+                if (hasActiveCombat && combatChars.length >= 1) {
+                    if (!this.isInCombat) {
+                        // 전투 시작
+                        this.isInCombat = true;
+                        this.combatEndTime = 0;
+                        this.viewRotationTimer = 0; // 전투 시작 시 타이머 리셋
+                    }
+                    this.combatFocusTime = 999999; // 전투 중에는 계속 유지
+                    
+                    // 전투 중인 캐릭터 중 가장 많은 킬을 가진 캐릭터를 포커스
+                    const combatFocusChar = combatChars.reduce((best, current) => 
+                        (current.kills > (best?.kills || 0)) ? current : best, combatChars[0]
+                    );
+                    
+                    // 전투 중일 때는 포커스 변경 쿨다운 무시하고 전투 캐릭터를 따라감
+                    if (this.currentFocusChar !== combatFocusChar) {
+                        this.currentFocusChar = combatFocusChar;
+                        this.focusTarget = combatFocusChar;
+                        this.focusChangeCooldown = 999999; // 전투 중에는 쿨다운 무한대
+                    }
+                } else {
+                    // 전투 종료
+                    if (this.isInCombat) {
+                        this.isInCombat = false;
+                        this.combatEndTime = 120; // 전투 종료 후 2초 유지
+                        this.combatFocusTime = 0;
+                    }
+                    
+                    // 전투 종료 후 유지 시간 감소
+                    if (this.combatEndTime > 0) {
+                        this.combatEndTime--;
+                        // 전투 종료 후 2초간은 현재 포커스 유지
+                        this.focusChangeCooldown = this.combatEndTime;
+                    } else {
+                        // 전투 종료 후 2초가 지나면 포커스 변경 쿨다운 감소
+                        this.focusChangeCooldown = Math.max(0, this.focusChangeCooldown - 1);
+                    }
+                }
+
+                // 포커스 변경 로직 (전투 중이 아니고 쿨다운이 없을 때만)
+                if (!this.isInCombat && this.combatEndTime === 0) {
+                    // 뷰 순환 타이머 증가
+                    this.viewRotationTimer++;
+                    
+                    // 일정 시간마다 또는 쿨다운이 끝났을 때 포커스 변경
+                    if (this.viewRotationTimer >= this.viewRotationInterval || 
+                        (this.focusChangeCooldown === 0 && (!this.currentFocusChar || !this.currentFocusChar.alive))) {
+                        
+                        // 살아있는 캐릭터들을 킬 수 순으로 정렬
+                        const sortedTargets = [...targets].sort((a, b) => b.kills - a.kills);
+                        
+                        if (sortedTargets.length > 0) {
+                            // 현재 포커스 캐릭터를 제외하고 다음 캐릭터 선택
+                            let nextIndex = this.viewRotationIndex;
+                            
+                            // 현재 포커스가 있으면 그 다음 캐릭터로
+                            if (this.currentFocusChar && sortedTargets.includes(this.currentFocusChar)) {
+                                const currentIndex = sortedTargets.indexOf(this.currentFocusChar);
+                                nextIndex = (currentIndex + 1) % sortedTargets.length;
+                            } else {
+                                // 현재 포커스가 없으면 다음 인덱스로
+                                nextIndex = (this.viewRotationIndex + 1) % sortedTargets.length;
+                            }
+                            
+                            // 다음 캐릭터 선택
+                            const nextChar = sortedTargets[nextIndex];
+                            
+                            if (nextChar && nextChar.alive) {
+                                this.currentFocusChar = nextChar;
+                                this.focusTarget = nextChar;
+                                this.viewRotationIndex = nextIndex;
+                                this.viewRotationTimer = 0; // 타이머 리셋
+                                this.focusChangeCooldown = 120; // 2초간 포커스 변경 방지
+                            }
+                        }
+                    }
+                    
+                    // 쿨다운 감소
+                    if (this.focusChangeCooldown > 0) {
+                        this.focusChangeCooldown--;
+                    }
+                }
+
+                // 포커스가 없으면 살아있는 캐릭터 중 첫 번째로 설정
+                if (!this.focusTarget) {
+                    const aliveTargets = targets.filter(t => t.alive);
+                    if (aliveTargets.length > 0) {
+                        const sortedTargets = [...aliveTargets].sort((a, b) => b.kills - a.kills);
+                        this.currentFocusChar = sortedTargets[this.viewRotationIndex % sortedTargets.length];
+                        this.focusTarget = this.currentFocusChar;
+                    } else if (this.currentFocusChar && this.currentFocusChar.alive) {
+                        this.focusTarget = this.currentFocusChar;
+                    }
+                }
+
+                // 현재 포커스 캐릭터가 사망했을 때
+                if (this.focusTarget && this.focusTarget.alive === false) {
+                    // 살아있는 캐릭터 중에서 다음 캐릭터 선택
+                    const aliveTargets = targets.filter(t => t.alive);
+                    if (aliveTargets.length > 0) {
+                        const sortedTargets = [...aliveTargets].sort((a, b) => b.kills - a.kills);
+                        this.viewRotationIndex = (this.viewRotationIndex + 1) % sortedTargets.length;
+                        const nextChar = sortedTargets[this.viewRotationIndex];
+                        this.currentFocusChar = nextChar;
+                        this.focusTarget = nextChar;
+                        this.viewRotationTimer = 0; // 타이머 리셋
+                    }
+                }
+
+                if (!this.focusTarget) return;
+
+                const centerX = this.focusTarget.pos.x;
+                const centerY = this.focusTarget.pos.y;
+
+                // Target position
+                const targetX = centerX - this.width / (2 * this.zoom);
+                const targetY = centerY - this.height / (2 * this.zoom);
+
+                // 더 부드럽게 따라가기 (너무 빠르게 움직이지 않도록)
+                this.x += (targetX - this.x) * 0.08;
+                this.y += (targetY - this.y) * 0.08;
+
+                // 전투 중일 때 확대 (더 명확하게)
+                if (this.isInCombat || this.combatEndTime > 0) {
+                    this.targetZoom = 1.6; // 전투 중 더 크게 확대
+                } else {
+                    this.targetZoom = 1.2; // 일반 상태
+                }
+                this.zoom += (this.targetZoom - this.zoom) * 0.05; // 줌 변화 속도 증가
+            }
+
+            apply(ctx) {
+                ctx.save();
+                ctx.scale(this.zoom, this.zoom);
+                ctx.translate(-this.x, -this.y);
+            }
+
+            reset(ctx) {
+                ctx.restore();
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color, speed = 2) {
+                this.pos = new Vector2(x, y);
+                this.vel = new Vector2(random(-1, 1), random(-1, 1)).normalize().mult(random(1, speed));
+                this.life = 1.0;
+                this.decay = random(0.02, 0.05);
+                this.color = color;
+                this.size = random(2, 5);
+            }
+
+            update() {
+                this.pos.add(this.vel);
+                this.life -= this.decay;
+                this.size *= 0.95;
+            }
+
+            draw(ctx) {
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.pos.x, this.pos.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        class Projectile {
+            constructor(owner, x, y, target, type, damageOverride = null) {
+                this.owner = owner;
+                this.pos = new Vector2(x, y);
+                this.targetPos = target.pos.copy();
+                this.vel = this.targetPos.copy().sub(this.pos).normalize().mult(type === 'bullet' ? 15 : 8);
+                this.type = type; // 'arrow', 'bullet', 'magic', 'grenade', 'cannon'
+                this.active = true;
+                this.damage = damageOverride != null ? damageOverride : owner.damage;
+                this.life = 100;
+                this.isExplosive = (type === 'grenade' || type === 'cannon');
+
+                if (this.isExplosive) {
+                    this.vel.mult(0.5);
+                    this.targetPos = target.pos.copy(); // Grenade goes to location
+                }
+            }
+
+            update(game) {
+                this.pos.add(this.vel);
+                this.life--;
+
+                if (this.isExplosive) {
+                    if (distance(this.pos, this.targetPos) < 10 || this.life <= 0) {
+                        this.explode(game);
+                    }
+                } else {
+                    // Check collision
+                    for (let other of game.characters) {
+                        if (other === this.owner || !other.alive) continue;
+                        if (distance(this.pos, other.pos) < other.size + 5) {
+                            other.takeDamage(this.damage, this.owner, game);
+                            this.active = false;
+                            game.addParticle(this.pos.x, this.pos.y, '#fff', 5);
+                            break;
+                        }
+                    }
+                }
+
+                // 원형 맵 경계 체크
+                const distFromCenter = distance(this.pos, new Vector2(0, 0));
+                if (distFromCenter > CONFIG.mapRadius) {
+                    this.active = false;
+                }
+            }
+
+            explode(game) {
+                this.active = false;
+                game.addParticle(this.pos.x, this.pos.y, '#f97316', 20); // Explosion visual
+                // AOE Damage
+                for (let other of game.characters) {
+                    if (!other.alive) continue;
+                    const d = distance(this.pos, other.pos);
+                    if (d < 100) {
+                        other.takeDamage(this.damage * 1.5, this.owner, game);
+                    }
+                }
+            }
+
+            draw(ctx) {
+                ctx.fillStyle = this.type === 'magic' ? '#d946ef' : '#fff';
+                ctx.beginPath();
+                if (this.isExplosive) {
+                    ctx.arc(this.pos.x, this.pos.y, 6, 0, Math.PI * 2);
+                } else {
+                    ctx.arc(this.pos.x, this.pos.y, 3, 0, Math.PI * 2);
+                }
+                ctx.fill();
+            }
+        }
+
+        const BUFF_DEFS = {
+            RAGE: {
+                key: 'rage',
+                icon: '⚔️',
+                color: '#f97316',
+                duration: 10,
+                apply: (c) => { c.damage += 8; },
+                remove: (c) => { c.damage -= 8; }
+            },
+            HASTE: {
+                key: 'haste',
+                icon: '💨',
+                color: '#38bdf8',
+                duration: 8,
+                apply: (c) => { c.speedBonus = (c.speedBonus || 0) + 0.6; },
+                remove: (c) => { c.speedBonus = Math.max(0, (c.speedBonus || 0) - 0.6); }
+            },
+            SHIELD: {
+                key: 'shield',
+                icon: '🛡️',
+                color: '#c4b5fd',
+                duration: 12,
+                apply: (c) => { c.defense += 0.25; },
+                remove: (c) => { c.defense = Math.max(0, c.defense - 0.25); }
+            },
+            REGEN: {
+                key: 'regen',
+                icon: '✚',
+                color: '#4ade80',
+                duration: 10,
+                tickIntervalFrames: 30,
+                tick: (c) => { c.health = Math.min(c.maxHealth, c.health + 4); }
+            }
+        };
+
+        const ITEM_TYPES = {
+            HEALTH: { type: 'consumable', name: '체력 물약', color: '#22c55e', effect: (c, g) => { c.health = Math.min(c.health + 50, c.maxHealth); g.addFloatingText('+50 체력', c.pos.x, c.pos.y, '#22c55e'); } },
+            STRENGTH: { type: 'buff', name: '분노 주사기', color: '#eab308', buffKey: 'RAGE' },
+            SPEED: { type: 'buff', name: '가속 부츠', color: '#3b82f6', buffKey: 'HASTE' },
+            BOW: { type: 'weapon', name: '활', color: '#a8a29e', range: 300, cooldown: 40, damage: 15, projectile: 'arrow' },
+            GUN: { type: 'weapon', name: '소총', color: '#475569', range: 400, cooldown: 10, damage: 6, projectile: 'bullet' },
+            STAFF: { type: 'weapon', name: '마법 지팡이', color: '#8b5cf6', range: 340, cooldown: 50, damage: 25, projectile: 'magic' },
+            CANNON: { type: 'weapon', name: '대포', color: '#166534', range: 200, cooldown: 80, damage: 30, projectile: 'cannon' },
+            TRAP: { type: 'trap', name: '지뢰', color: '#ef4444', damage: 40 },
+            ARMOR: { type: 'passive', name: '방패', color: '#64748b', effect: (c, g) => { c.defense += 0.1; g.addFloatingText('+방어력', c.pos.x, c.pos.y, '#64748b'); } },
+            FRENZY_SERUM: { type: 'buff', name: '광폭 혈청', color: '#fb7185', buffKey: 'RAGE' },
+            HASTE_STIM: { type: 'buff', name: '가속 주입기', color: '#38bdf8', buffKey: 'HASTE' },
+            AEGIS_FIELD: { type: 'buff', name: '수호장 생성기', color: '#c4b5fd', buffKey: 'SHIELD' },
+            REGEN_DRONE: { type: 'buff', name: '치유 드론', color: '#4ade80', buffKey: 'REGEN' }
+        };
+
+        const ITEM_LOOT_KEYS = Object.keys(ITEM_TYPES).filter(key => key !== 'SWORD');
+
+        class Item {
+            constructor(id, x, y, forcedType = null) {
+                this.id = id;
+                this.pos = new Vector2(x, y);
+                this.size = 12;
+                this.active = true;
+
+                // Random Type
+                const keys = forcedType ? [forcedType] : ITEM_LOOT_KEYS.length ? ITEM_LOOT_KEYS : Object.keys(ITEM_TYPES);
+                const key = keys[Math.floor(Math.random() * keys.length)];
+                this.data = ITEM_TYPES[key];
+
+                this.floatOffset = random(0, Math.PI * 2);
+                this.exploding = false;
+                this.timer = 0;
+                this.triggeredBy = null;
+            }
+
+            update(game) {
+                if (this.data.type !== 'trap') return;
+                if (!this.exploding) return;
+
+                if (this.timer > 0) {
+                    this.timer--;
+                    return;
+                }
+
+                // 폭발 처리 (한 번만 실행)
+                this.active = false;
+                this.exploding = false;
+                this.timer = 0;
+
+                game.addParticle(this.pos.x, this.pos.y, '#ef4444', 20);
+                game.addFloatingText('폭발!', this.pos.x, this.pos.y - 20, '#ef4444');
+
+                game.characters.forEach(char => {
+                    if (!char.alive) return;
+                    if (distance(char.pos, this.pos) < 120) {
+                        char.takeDamage(this.data.damage, null, game);
+                    }
+                });
+            }
+
+            draw(ctx, time) {
+                if (!this.active) return;
+                const floatY = Math.sin(time * 3 + this.floatOffset) * 4;
+
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.data.color;
+
+                ctx.fillStyle = this.data.color;
+
+                if (this.data.type === 'trap') {
+                    // Draw X for trap
+                    ctx.beginPath();
+                    ctx.moveTo(this.pos.x - 5, this.pos.y - 5);
+                    ctx.lineTo(this.pos.x + 5, this.pos.y + 5);
+                    ctx.moveTo(this.pos.x + 5, this.pos.y - 5);
+                    ctx.lineTo(this.pos.x - 5, this.pos.y + 5);
+                    ctx.strokeStyle = this.data.color;
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+
+                    if (this.exploding) {
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.setLineDash([3, 3]);
+                        ctx.beginPath();
+                        ctx.arc(this.pos.x, this.pos.y, 40 + Math.sin(time * 10) * 10, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(this.pos.x, this.pos.y + floatY, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.shadowBlur = 0;
+
+                // Label
+                ctx.fillStyle = '#fff';
+                ctx.font = '10px Outfit';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.data.name, this.pos.x, this.pos.y - 15 + floatY);
+            }
+        }
+
+        class Character {
+            constructor(id, name, color, x, y) {
+                this.id = id;
+                this.name = name;
+                this.color = color;
+                this.pos = new Vector2(x, y);
+                this.vel = new Vector2(0, 0);
+                this.size = 15;
+                this.baseSpeed = 3.5; // 기본 속도
+                this.maxHealth = 100;
+                this.health = this.maxHealth;
+                this.damage = 10;
+                this.defense = 0;
+                this.weapon = ITEM_TYPES.SWORD; // 기본 무기: 칼
+                this.detectRange = 800; // 감지 범위 증가 (더 적극적으로)
+                this.cooldown = 0;
+                this.maxCooldown = 30;
+                this.state = 'wander';
+                this.target = null;
+                this.alive = true;
+                this.kills = 0;
+                this.stunned = false; // 스턴 상태
+                this.stunTime = 0; // 스턴 지속 시간
+                this.weaponSpeedMultiplier = 1.2; // 맨손일 때 가장 빠름
+                this.speedBonus = 0;
+                this.facingAngle = Math.random() * Math.PI * 2;
+                this.updateWeaponSpeed();
+                this.stuckTimer = 0;
+                this.activeBuffs = [];
+            }
+
+            getMoveSpeed() {
+                return (this.baseSpeed * this.weaponSpeedMultiplier) + this.speedBonus;
+            }
+
+            updateWeaponSpeed() {
+                if (!this.weapon) {
+                    this.weaponSpeedMultiplier = 1.2;
+                    return;
+                }
+
+                const name = this.weapon.name;
+                if (name.includes('칼')) {
+                    this.weaponSpeedMultiplier = 1.1; // 칼은 맨손보다 약간 느리지만 빠름
+                } else if (name.includes('활')) {
+                    this.weaponSpeedMultiplier = 1.0;
+                } else if (name.includes('소총')) {
+                    this.weaponSpeedMultiplier = 0.8;
+                } else if (name.includes('마법')) {
+                    this.weaponSpeedMultiplier = 0.9;
+                } else if (name.includes('대포')) {
+                    this.weaponSpeedMultiplier = 0.85;
+                } else {
+                    this.weaponSpeedMultiplier = 1.0;
+                }
+            }
+
+            teleportNearCenter(game) {
+                const safeRadius = game.safeZone && game.safeZone.radius ? game.safeZone.radius : CONFIG.mapRadius * 0.1;
+                const maxRadius = Math.max(80, Math.min(600, safeRadius * 0.2));
+                const distance = random(40, maxRadius);
+                const angle = random(0, Math.PI * 2);
+                this.pos.x = Math.cos(angle) * distance;
+                this.pos.y = Math.sin(angle) * distance;
+                this.vel.x = 0;
+                this.vel.y = 0;
+            }
+
+            // 카메라 뷰 안에 있는지 확인
+            isInCameraView(camera) {
+                if (!camera || !camera.focusTarget) return false;
+                const viewWidth = camera.width / camera.zoom;
+                const viewHeight = camera.height / camera.zoom;
+                const camX = camera.x + viewWidth / 2;
+                const camY = camera.y + viewHeight / 2;
+                const dist = distance(this.pos, new Vector2(camX, camY));
+                return dist < Math.max(viewWidth, viewHeight) * 0.8;
+            }
+
+            update(game) {
+                if (!this.alive) return;
+
+                this.updateBuffs(game);
+
+                // 스턴 상태 업데이트
+                if (this.stunned) {
+                    this.stunTime--;
+                    if (this.stunTime <= 0) {
+                        this.stunned = false;
+                    } else {
+                        // 스턴 중에는 행동 불가
+                        return;
+                    }
+                }
+
+                if (this.cooldown > 0) this.cooldown--;
+
+                // 자기장 체크 (매 프레임마다) - 가장 먼저 처리
+                if (!game.safeZone.isInside(this.pos)) {
+                    // 자기장 밖 데미지 (10 데미지 고정)
+                    this.takeDamage(10, null, game);
+                    
+                    // 맵 중앙 근처의 랜덤한 위치로 순간이동
+                    this.teleportNearCenter(game);
+                    
+                    // 자기장 데미지 사운드 (줌된 화면 안에 있을 때만)
+                    if (this.isInCameraView(game.camera) && Math.random() < 0.1) {
+                        soundManager.playZoneDamage();
+                    }
+                }
+
+                this.decideState(game);
+                this.executeState(game);
+
+                this.pos.add(this.vel);
+
+                // 정체 시 강제 이동
+                if (this.vel.mag() < 0.15) {
+                    this.stuckTimer++;
+                    if (this.stuckTimer > 180) {
+                        const nudgeAngle = random(0, Math.PI * 2);
+                        const nudge = new Vector2(Math.cos(nudgeAngle), Math.sin(nudgeAngle)).mult(this.getMoveSpeed());
+                        this.vel.add(nudge);
+                        this.wanderAngle = nudgeAngle;
+                        this.stuckTimer = 0;
+                    }
+                } else {
+                    this.stuckTimer = 0;
+                }
+                
+                // 원형 맵 경계 체크
+                const distFromCenter = distance(this.pos, new Vector2(0, 0));
+                if (distFromCenter + this.size > CONFIG.mapRadius) {
+                    const angle = Math.atan2(this.pos.y, this.pos.x);
+                    this.pos.x = Math.cos(angle) * (CONFIG.mapRadius - this.size);
+                    this.pos.y = Math.sin(angle) * (CONFIG.mapRadius - this.size);
+                }
+                
+                this.vel.mult(0.85); // Less friction for snappier movement
+            }
+
+            updateBuffs(game) {
+                if (!this.activeBuffs.length) return;
+                for (let i = this.activeBuffs.length - 1; i >= 0; i--) {
+                    const buff = this.activeBuffs[i];
+                    buff.remaining--;
+                    if (buff.tickInterval) {
+                        buff.tickCountdown--;
+                        if (buff.tickCountdown <= 0) {
+                            if (buff.tick) buff.tick(this, game);
+                            buff.tickCountdown = buff.tickInterval;
+                        }
+                    }
+                    if (buff.remaining <= 0) {
+                        if (buff.remove) buff.remove(this, game);
+                        this.activeBuffs.splice(i, 1);
+                    }
+                }
+            }
+
+            addBuff(buffKey, game) {
+                const def = BUFF_DEFS[buffKey];
+                if (!def) return;
+                const existing = this.activeBuffs.find(buff => buff.key === def.key);
+                if (existing) {
+                    existing.remaining = def.duration * 60;
+                    existing.tickCountdown = def.tickIntervalFrames || null;
+                    return;
+                }
+                if (def.apply) def.apply(this, game);
+                this.activeBuffs.push({
+                    key: def.key,
+                    icon: def.icon,
+                    color: def.color,
+                    remaining: def.duration * 60,
+                    tickInterval: def.tickIntervalFrames || null,
+                    tickCountdown: def.tickIntervalFrames || null,
+                    tick: def.tick || null,
+                    remove: def.remove || null
+                });
+                game.addFloatingText(`${def.icon} 버프`, this.pos.x, this.pos.y - 45, def.color || '#fff');
+            }
+
+            decideState(game) {
+                // 자기장 밖에 있으면 가장 높은 우선순위로 맵 중앙으로 이동
+                if (!game.safeZone.isInside(this.pos)) {
+                    this.state = 'flee_zone';
+                    this.target = null; // 맵 중앙(0, 0)으로 이동
+                    return;
+                }
+
+                let nearestEnemy = null;
+                let nearestDist = Infinity;
+
+                for (let other of game.characters) {
+                    if (other === this || !other.alive) continue;
+                    const d = distance(this.pos, other.pos);
+                    if (d < nearestDist) {
+                        nearestDist = d;
+                        nearestEnemy = other;
+                    }
+                }
+
+                let nearestItem = null;
+                let itemDist = Infinity;
+                for (let item of game.items) {
+                    if (!item.active) continue;
+                    // 자기장 안쪽에 있는 아이템만 찾기
+                    if (!game.safeZone.isInside(item.pos)) continue;
+                    // Avoid traps unless stupid? Let's say they avoid traps if they see them
+                    if (item.data.type === 'trap') continue;
+
+                    const d = distance(this.pos, item.pos);
+                    if (d < itemDist) {
+                        itemDist = d;
+                        nearestItem = item;
+                    }
+                }
+
+                // Aggressive Logic
+                const attackRange = (this.weapon ? this.weapon.range : 40) * 1.2;
+
+                // 자기장 안쪽에 있는 적만 공격
+                if (nearestEnemy && !game.safeZone.isInside(nearestEnemy.pos)) {
+                    nearestEnemy = null; // 자기장 밖의 적은 무시
+                }
+
+                // 무기가 없는 경우, 무기가 있는 적을 만나면 아이템을 우선 파밍
+                if (!this.weapon && nearestEnemy && nearestEnemy.weapon && nearestDist < this.detectRange) {
+                    // 무기 아이템을 우선적으로 찾기
+                    let weaponItem = null;
+                    let weaponItemDist = Infinity;
+                    for (let item of game.items) {
+                        if (!item.active || item.data.type !== 'weapon') continue;
+                        if (!game.safeZone.isInside(item.pos)) continue;
+                        const d = distance(this.pos, item.pos);
+                        if (d < weaponItemDist && d < this.detectRange) {
+                            weaponItemDist = d;
+                            weaponItem = item;
+                        }
+                    }
+                    if (weaponItem) {
+                        this.state = 'seek_item';
+                        this.target = weaponItem;
+                        return;
+                    }
+                }
+
+                const wantsItem = nearestItem && game.safeZone.isInside(nearestItem.pos) && (
+                    itemDist < this.detectRange * 0.85 ||
+                    this.health < this.maxHealth * 0.55 ||
+                    !this.weapon ||
+                    this.weapon === ITEM_TYPES.SWORD ||
+                    nearestItem.data.type === 'weapon'
+                );
+
+                if (wantsItem && (!nearestEnemy || nearestDist > attackRange * 0.6)) {
+                    this.state = 'seek_item';
+                    this.target = nearestItem;
+                    return;
+                }
+
+                // 적을 우선적으로 공격 (더 적극적으로)
+                if (nearestEnemy && nearestDist < attackRange) {
+                    // 전투 시작 사운드 (상태가 변경될 때만, 줌된 화면 안에 있을 때만)
+                    if (this.state !== 'attack' && (this.isInCameraView(game.camera) || nearestEnemy.isInCameraView(game.camera))) {
+                        soundManager.playCombatStart();
+                    }
+                    this.state = 'attack';
+                    this.target = nearestEnemy;
+                } else if (nearestEnemy && nearestDist < this.detectRange * 1.15) {
+                    // 추적 범위를 더 넓게 (더 적극적으로)
+                    this.state = 'chase';
+                    this.target = nearestEnemy;
+                } else {
+                    this.state = 'wander';
+                    this.target = null;
+                }
+            }
+
+            executeState(game) {
+                const desired = new Vector2(0, 0);
+                const moveSpeed = this.getMoveSpeed();
+
+                // 유효하지 않은 타겟 정리
+                if (this.state === 'seek_item' && this.target && (!this.target.active || !game.safeZone.isInside(this.target.pos))) {
+                    this.target = null;
+                    this.state = 'wander';
+                }
+                if ((this.state === 'chase' || this.state === 'attack') && this.target && (!this.target.alive)) {
+                    this.target = null;
+                    this.state = 'wander';
+                }
+
+                if (this.state === 'flee_zone') {
+                    const toCenter = new Vector2(0, 0).copy().sub(this.pos);
+                    toCenter.normalize();
+                    desired.x = toCenter.x;
+                    desired.y = toCenter.y;
+                    desired.mult(moveSpeed * 1.5);
+                } else if (this.state === 'wander') {
+                    if (!game.safeZone.isInside(this.pos)) {
+                        const toCenter = new Vector2(0, 0).copy().sub(this.pos);
+                        toCenter.normalize();
+                        desired.x = toCenter.x;
+                        desired.y = toCenter.y;
+                        desired.mult(moveSpeed * 1.2);
+                    } else {
+                        if (Math.random() < 0.05) this.wanderAngle = random(0, Math.PI * 2);
+                        desired.x = Math.cos(this.wanderAngle || 0);
+                        desired.y = Math.sin(this.wanderAngle || 0);
+                        desired.mult(moveSpeed * 0.6);
+                    }
+                } else if (this.state === 'chase' && this.target) {
+                    desired.x = this.target.pos.x - this.pos.x;
+                    desired.y = this.target.pos.y - this.pos.y;
+                    desired.normalize().mult(moveSpeed);
+                } else if (this.state === 'seek_item' && this.target) {
+                    desired.x = this.target.pos.x - this.pos.x;
+                    desired.y = this.target.pos.y - this.pos.y;
+                    desired.normalize().mult(moveSpeed);
+
+                    if (distance(this.pos, this.target.pos) < this.size + this.target.size) {
+                        this.consumeItem(this.target, game);
+                    }
+                } else if (this.state === 'attack' && this.target) {
+                    // 공격 방향으로 무기 방향 설정
+                    this.facingAngle = Math.atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x);
+                    
+                    if (this.weapon && distance(this.pos, this.target.pos) < this.weapon.range * 0.5) {
+                        desired.x = this.pos.x - this.target.pos.x;
+                        desired.y = this.pos.y - this.target.pos.y;
+                        desired.normalize().mult(moveSpeed);
+                    } else {
+                        desired.mult(0);
+                    }
+
+                    if (this.cooldown <= 0) {
+                        this.attack(this.target, game);
+                    }
+                } else if (this.state === 'chase' && this.target) {
+                    // 추적 중에도 타겟 방향으로 무기 방향 설정
+                    this.facingAngle = Math.atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x);
+                }
+
+                const steer = desired.sub(this.vel);
+                steer.mult(0.15);
+                this.vel.add(steer);
+
+                // Trap collision check
+                for (let item of game.items) {
+                    if (item.active && item.data.type === 'trap' && distance(this.pos, item.pos) < this.size + item.size) {
+                        this.triggerTrap(item, game);
+                    }
+                }
+            }
+
+            attack(target, game) {
+                this.cooldown = this.weapon ? this.weapon.cooldown : this.maxCooldown;
+                this.facingAngle = Math.atan2(target.pos.y - this.pos.y, target.pos.x - this.pos.x);
+
+                const attackDamage = this.weapon ? this.weapon.damage : this.damage;
+
+                if (this.weapon && this.weapon.projectile) {
+                    // Ranged Attack
+                    let projectileDamage = attackDamage;
+                    if (this.weapon.name === '소총') {
+                        projectileDamage *= 0.5; // 요청: 표시값 대비 절반 대미지 적용
+                    }
+                    game.projectiles.push(new Projectile(this, this.pos.x, this.pos.y, target, this.weapon.projectile, projectileDamage));
+                    if (this.isInCameraView(game.camera) || target.isInCameraView(game.camera)) {
+                        soundManager.playAttack();
+                    }
+                } else {
+                    // Melee Attack (칼 또는 무기 없음)
+                    game.addParticle(target.pos.x, target.pos.y, '#ffffff', 5);
+                    target.takeDamage(attackDamage, this, game);
+                    const dir = target.pos.copy().sub(this.pos).normalize().mult(8);
+                    this.vel.add(dir);
+                    if (this.isInCameraView(game.camera) || target.isInCameraView(game.camera)) {
+                        soundManager.playAttack();
+                    }
+                }
+            }
+
+            takeDamage(amount, attacker, game) {
+                const actualDamage = amount * (1 - this.defense);
+                this.health -= actualDamage;
+                game.addFloatingText(Math.floor(actualDamage), this.pos.x, this.pos.y - 20, '#ef4444');
+                if (this.isInCameraView(game.camera) || (attacker && attacker.isInCameraView && attacker.isInCameraView(game.camera))) {
+                    soundManager.playHit();
+                }
+
+                // 매직 지팡이 공격 시 20% 확률로 스턴
+                if (attacker && attacker.weapon && attacker.weapon.name === '마법 지팡이' && Math.random() < 0.2) {
+                    this.stunned = true;
+                    this.stunTime = 60; // 1초간 스턴
+                    game.addFloatingText("스턴!", this.pos.x, this.pos.y - 40, '#8b5cf6');
+                }
+
+                if (this.health <= 0) {
+                    this.die(game);
+                    if (attacker) attacker.onKill(game);
+                }
+            }
+
+            onKill(game) {
+                this.kills++;
+                this.health = Math.min(this.health + 40, this.maxHealth); // 킬 보상
+                game.spawnKillRewards(this);
+                game.addFloatingText("전리품 드랍!", this.pos.x, this.pos.y - 40, '#facc15');
+                game.addParticle(this.pos.x, this.pos.y, '#facc15', 15);
+                if (this.isInCameraView(game.camera)) {
+                    soundManager.playKill();
+                }
+            }
+
+            triggerTrap(trap, game) {
+                if (!trap.active || trap.exploding) return;
+                trap.exploding = true;
+                trap.timer = 180; // 3초 후 폭발
+                game.addFloatingText("지뢰 작동!", trap.pos.x, trap.pos.y - 20, '#ef4444');
+            }
+
+            consumeItem(item, game) {
+                item.active = false;
+                const data = item.data;
+
+                if (data.type === 'consumable' || data.type === 'passive') {
+                    data.effect(this, game);
+                    if (this.isInCameraView(game.camera)) {
+                        soundManager.playItemPickup();
+                    }
+                } else if (data.type === 'weapon') {
+                    this.weapon = data;
+                    this.updateWeaponSpeed();
+                    game.addFloatingText(`${data.name} 장착`, this.pos.x, this.pos.y - 30, '#fff');
+                    if (this.isInCameraView(game.camera)) {
+                        soundManager.playItemPickup();
+                    }
+                } else if (data.type === 'buff' && data.buffKey) {
+                    this.addBuff(data.buffKey, game);
+                    if (this.isInCameraView(game.camera)) {
+                        soundManager.playItemPickup();
+                    }
+                }
+            }
+
+            die(game) {
+                this.alive = false;
+                for (let i = 0; i < 15; i++) {
+                    game.addParticle(this.pos.x, this.pos.y, this.color, 10);
+                }
+                if (this.isInCameraView(game.camera)) {
+                    soundManager.playDeath();
+                }
+                // Drop loot? Maybe just simple for now.
+                game.checkWinCondition();
+            }
+
+            draw(ctx) {
+                if (!this.alive) return;
+
+                // Weapon Visual
+                if (this.weapon) {
+                    ctx.save();
+                    ctx.translate(this.pos.x, this.pos.y);
+                    ctx.rotate(this.facingAngle);
+                    ctx.fillStyle = this.weapon.color;
+                    ctx.fillRect(10, -2, 15, 4);
+                    ctx.restore();
+                }
+
+                // Body
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.pos.x, this.pos.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Shield visual
+                if (this.defense > 0) {
+                    ctx.strokeStyle = '#64748b';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(this.pos.x, this.pos.y, this.size + 4, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                // Health bar
+                const hpPct = this.health / this.maxHealth;
+                ctx.fillStyle = '#334155';
+                ctx.fillRect(this.pos.x - 15, this.pos.y - 25, 30, 4);
+                ctx.fillStyle = hpPct > 0.5 ? '#22c55e' : '#ef4444';
+                ctx.fillRect(this.pos.x - 15, this.pos.y - 25, 30 * hpPct, 4);
+
+                // Name & Weapon
+                ctx.fillStyle = '#fff';
+                ctx.font = '10px Outfit';
+                ctx.textAlign = 'center';
+                const weaponName = this.weapon ? `[${this.weapon.name}]` : '';
+                ctx.fillText(`${this.name} ${weaponName}`, this.pos.x, this.pos.y + 30);
+
+                if (this.activeBuffs.length) {
+                    ctx.font = '12px Outfit';
+                    this.activeBuffs.forEach((buff, idx) => {
+                        const offset = (idx - (this.activeBuffs.length - 1) / 2) * 14;
+                        ctx.fillStyle = buff.color || '#e2e8f0';
+                        ctx.fillText(buff.icon, this.pos.x + offset, this.pos.y - 40);
+                    });
+                }
+                
+                // 스턴 상태 표시
+                if (this.stunned) {
+                    ctx.fillStyle = '#8b5cf6';
+                    ctx.font = 'bold 12px Outfit';
+                    ctx.fillText('⚡ 스턴', this.pos.x, this.pos.y + 45);
+                }
+            }
+        }
+
+        // --- Game Engine ---
+        class Game {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.width = window.innerWidth;
+                this.height = window.innerHeight;
+                this.canvas.width = this.width;
+                this.canvas.height = this.height;
+
+                this.characters = [];
+                this.items = [];
+                this.particles = [];
+                this.projectiles = [];
+                this.floatingTexts = [];
+                this.camera = new Camera(this.width, this.height);
+                this.time = 0;
+                this.gameOver = false;
+                this.destroyed = false;
+                this.animationFrameId = null;
+
+                this.init();
+                this.loop = this.loop.bind(this);
+                this.animationFrameId = requestAnimationFrame(this.loop);
+
+                this.handleResize = () => {
+                    this.width = window.innerWidth;
+                    this.height = window.innerHeight;
+                    this.canvas.width = this.width;
+                    this.canvas.height = this.height;
+                    this.camera.width = this.width;
+                    this.camera.height = this.height;
+                };
+                window.addEventListener('resize', this.handleResize);
+            }
+
+            init() {
+                // Safe Zone 초기화
+                this.safeZone = new SafeZone();
+
+                // 미니맵 캔버스 초기화
+                this.minimapCanvas = document.getElementById('minimapCanvas');
+                this.minimapCtx = this.minimapCanvas.getContext('2d');
+                this.minimapCanvas.width = 200;
+                this.minimapCanvas.height = 200;
+
+                // Spawn Characters (원형 맵 내부에)
+                for (let i = 0; i < CONFIG.entityCount; i++) {
+                    const angle = random(0, Math.PI * 2);
+                    const radius = random(100, CONFIG.mapRadius * 0.8);
+                    const x = Math.cos(angle) * radius;
+                    const y = Math.sin(angle) * radius;
+                    const color = CONFIG.colors[i % CONFIG.colors.length];
+                    this.characters.push(new Character(i, CHARACTER_NAMES[i] || `플레이어 ${i + 1}`, color, x, y));
+                }
+
+                // 초기 아이템 개수 줄임
+                for (let i = 0; i < CONFIG.initialItemCount; i++) {
+                    this.spawnItem();
+                }
+
+                this.lastItemSpawn = 0;
+            }
+
+            spawnItem() {
+                // 자기장 안쪽에만 아이템 생성 (원형 맵 내부)
+                let x, y;
+                let attempts = 0;
+                do {
+                    const angle = random(0, Math.PI * 2);
+                    const radius = random(50, CONFIG.mapRadius * 0.8);
+                    x = Math.cos(angle) * radius;
+                    y = Math.sin(angle) * radius;
+                    attempts++;
+                } while (!this.safeZone.isInside(new Vector2(x, y)) && attempts < 20);
+                this.spawnItemAt(x, y);
+            }
+
+            spawnItemAt(x, y, forcedKey = null) {
+                this.items.push(new Item(this.items.length, x, y, forcedKey));
+            }
+
+            spawnKillRewards(killer) {
+                for (let i = 0; i < 2; i++) {
+                    const dropKey = ITEM_LOOT_KEYS[Math.floor(Math.random() * ITEM_LOOT_KEYS.length)];
+                    const angle = random(0, Math.PI * 2);
+                    const distanceOffset = random(15, 40);
+                    const x = killer.pos.x + Math.cos(angle) * distanceOffset;
+                    const y = killer.pos.y + Math.sin(angle) * distanceOffset;
+                    this.spawnItemAt(x, y, dropKey);
+                }
+            }
+
+            addParticle(x, y, color, count = 1) {
+                for (let i = 0; i < count; i++) {
+                    this.particles.push(new Particle(x, y, color));
+                }
+            }
+
+            addFloatingText(text, x, y, color) {
+                this.floatingTexts.push({
+                    text, x, y, color, life: 1.0, velY: -1
+                });
+            }
+
+            checkWinCondition() {
+                const survivors = this.characters.filter(c => c.alive);
+                document.getElementById('stats').innerText = `생존자: ${survivors.length} | 시간: ${Math.floor(this.time)}초`;
+
+                if (survivors.length <= 1 && !this.gameOver) {
+                    this.gameOver = true;
+                    const winner = survivors[0] || { name: 'Draw', color: '#fff' };
+                    this.showWinner(winner);
+                }
+            }
+
+            showWinner(winner) {
+                const overlay = document.getElementById('winner-overlay');
+                const nameEl = document.getElementById('winner-name');
+                nameEl.innerText = winner.name;
+                nameEl.style.color = winner.color;
+                overlay.classList.add('active');
+            }
+
+            update() {
+                if (this.gameOver) return;
+
+                this.time += 1 / 60;
+
+                // Update Safe Zone
+                this.safeZone.update(this);
+
+                // Update Camera
+                const aliveChars = this.characters.filter(c => c.alive);
+                this.camera.update(aliveChars, this);
+
+                // Update Entities
+                this.characters.forEach(c => c.update(this));
+                this.items.forEach(item => {
+                    if (item.update) item.update(this);
+                });
+                this.projectiles.forEach((p, index) => {
+                    p.update(this);
+                    if (!p.active) this.projectiles.splice(index, 1);
+                });
+
+                // Update Particles
+                this.particles.forEach((p, index) => {
+                    p.update();
+                    if (p.life <= 0) this.particles.splice(index, 1);
+                });
+
+                // Update Floating Texts
+                this.floatingTexts.forEach((t, index) => {
+                    t.y += t.velY;
+                    t.life -= 0.02;
+                    if (t.life <= 0) this.floatingTexts.splice(index, 1);
+                });
+
+                // 게임 중 지속적으로 아이템 생성 (더 자주)
+                const activeItems = this.items.filter(i => i.active).length;
+                if (this.time - this.lastItemSpawn > 1.2 && activeItems < 40) { // 약 1.2초마다, 최대 40개
+                    this.spawnItem();
+                    this.lastItemSpawn = this.time;
+                }
+
+                // 캐릭터 상태 UI 업데이트
+                this.updateCharacterPanel();
+            }
+
+            updateCharacterPanel() {
+                const listEl = document.getElementById('character-list');
+                listEl.innerHTML = '';
+
+                // 생존자 먼저, 사망자 나중에 (살아있는 캐릭터가 위쪽에)
+                const sorted = [...this.characters].sort((a, b) => {
+                    if (a.alive && !b.alive) return -1;
+                    if (!a.alive && b.alive) return 1;
+                    return b.kills - a.kills;
+                });
+
+                sorted.forEach(char => {
+                    const card = document.createElement('div');
+                    const isAlive = char.alive;
+                    card.className = `character-card ${isAlive ? 'alive' : 'dead'}`;
+                    
+                    const hpPercent = (char.health / char.maxHealth) * 100;
+                    let hpBarClass = 'hp-bar';
+                    if (hpPercent < 30) hpBarClass += ' low';
+                    else if (hpPercent < 60) hpBarClass += ' medium';
+                    
+                    const weaponName = char.weapon ? char.weapon.name : '근접';
+                    const weaponText = char.weapon ? ` [${weaponName}]` : ' [근접]';
+                    
+                    card.innerHTML = `
+                        <div class="character-card-header">
+                            <div class="character-color-dot" style="background: ${char.color}"></div>
+                            <div class="character-name">${char.name}${weaponText}</div>
+                            <div class="character-hp">: ${Math.floor(char.health)}</div>
+                        </div>
+                        ${isAlive ? `
+                        <div style="font-size: 0.7rem; color: rgba(226, 232, 240, 0.7); margin-top: 4px;">
+                            킬: ${char.kills} | 공격력: ${Math.floor(char.damage)}${char.stunned ? ' | ⚡스턴' : ''}
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-bar-fill ${hpBarClass}" style="width: ${hpPercent}%"></div>
+                        </div>
+                        ` : ''}
+                    `;
+                    listEl.appendChild(card);
+                });
+            }
+
+            draw() {
+                // Clear
+                this.ctx.fillStyle = '#0f172a';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+
+                this.camera.apply(this.ctx);
+
+                // Draw Map Boundaries (원형)
+                this.ctx.strokeStyle = '#334155';
+                this.ctx.lineWidth = 5;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, CONFIG.mapRadius, 0, Math.PI * 2);
+                this.ctx.stroke();
+
+                // Grid (원형 그리드)
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+                this.ctx.lineWidth = 1;
+                const gridSize = 500;
+                for (let r = gridSize; r < CONFIG.mapRadius; r += gridSize) {
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, r, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                }
+                for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, 0);
+                    this.ctx.lineTo(Math.cos(angle) * CONFIG.mapRadius, Math.sin(angle) * CONFIG.mapRadius);
+                    this.ctx.stroke();
+                }
+
+                // Terrain features
+                TERRAIN_FEATURES.forEach(feature => {
+                    this.ctx.fillStyle = feature.color;
+                    if (feature.type === 'circle') {
+                        this.ctx.beginPath();
+                        this.ctx.arc(feature.x, feature.y, feature.radius, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    } else if (feature.type === 'rect') {
+                        this.ctx.fillRect(feature.x, feature.y, feature.width, feature.height);
+                    }
+                });
+
+                // Draw Safe Zone
+                this.safeZone.draw(this.ctx);
+
+                // Draw Items
+                this.items.forEach(i => i.draw(this.ctx, this.time));
+
+                // Draw Projectiles
+                this.projectiles.forEach(p => p.draw(this.ctx));
+
+                // Draw Characters
+                this.characters.forEach(c => c.draw(this.ctx));
+
+                // Draw Particles
+                this.particles.forEach(p => p.draw(this.ctx));
+
+                // Draw Floating Texts
+                this.floatingTexts.forEach(t => {
+                    this.ctx.globalAlpha = t.life;
+                    this.ctx.fillStyle = t.color;
+                    this.ctx.font = 'bold 14px Outfit';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(t.text, t.x, t.y);
+                    this.ctx.globalAlpha = 1.0;
+                });
+
+                this.camera.reset(this.ctx);
+
+                // Draw Minimap
+                this.drawMinimap();
+            }
+
+            drawMinimap() {
+                const mm = this.minimapCtx;
+                const size = 200;
+                const scale = size / (CONFIG.mapRadius * 2);
+
+                // Clear
+                mm.fillStyle = '#0f172a';
+                mm.fillRect(0, 0, size, size);
+
+                // Draw map boundary
+                mm.strokeStyle = '#334155';
+                mm.lineWidth = 2;
+                mm.beginPath();
+                mm.arc(size / 2, size / 2, CONFIG.mapRadius * scale, 0, Math.PI * 2);
+                mm.stroke();
+
+                // Terrain features (minimap)
+                TERRAIN_FEATURES.forEach(feature => {
+                    mm.fillStyle = feature.color;
+                    if (feature.type === 'circle') {
+                        mm.beginPath();
+                        mm.arc((feature.x + CONFIG.mapRadius) * scale, (feature.y + CONFIG.mapRadius) * scale, feature.radius * scale, 0, Math.PI * 2);
+                        mm.fill();
+                    } else if (feature.type === 'rect') {
+                        mm.fillRect((feature.x + CONFIG.mapRadius) * scale, (feature.y + CONFIG.mapRadius) * scale, feature.width * scale, feature.height * scale);
+                    }
+                });
+
+                // Draw safe zone
+                if (this.safeZone.active) {
+                    // 자기장 외부 영역 표시
+                    mm.fillStyle = 'rgba(239, 68, 68, 0.2)';
+                    mm.beginPath();
+                    mm.arc(size / 2, size / 2, CONFIG.mapRadius * scale, 0, Math.PI * 2);
+                    mm.arc(size / 2, size / 2, this.safeZone.radius * scale, 0, Math.PI * 2);
+                    mm.fill('evenodd');
+                    
+                    // 자기장 경계선
+                    mm.strokeStyle = '#ef4444';
+                    mm.lineWidth = 3;
+                    mm.setLineDash([5, 5]);
+                    mm.beginPath();
+                    mm.arc(size / 2, size / 2, this.safeZone.radius * scale, 0, Math.PI * 2);
+                    mm.stroke();
+                    mm.setLineDash([]);
+                }
+
+                // Draw items
+                this.items.forEach(item => {
+                    if (!item.active) return;
+                    const x = (item.pos.x + CONFIG.mapRadius) * scale;
+                    const y = (item.pos.y + CONFIG.mapRadius) * scale;
+                    mm.fillStyle = item.data.color;
+                    mm.beginPath();
+                    mm.arc(x, y, 2, 0, Math.PI * 2);
+                    mm.fill();
+                });
+
+                // Draw characters
+                this.characters.forEach(char => {
+                    if (!char.alive) return;
+                    const x = (char.pos.x + CONFIG.mapRadius) * scale;
+                    const y = (char.pos.y + CONFIG.mapRadius) * scale;
+                    mm.fillStyle = char.color;
+                    mm.beginPath();
+                    mm.arc(x, y, 3, 0, Math.PI * 2);
+                    mm.fill();
+                });
+
+                // Draw camera view (현재 보는 영역 표시)
+                const camCenterX = (this.camera.x + this.camera.width / (2 * this.camera.zoom) + CONFIG.mapRadius) * scale;
+                const camCenterY = (this.camera.y + this.camera.height / (2 * this.camera.zoom) + CONFIG.mapRadius) * scale;
+                const viewWidth = (this.camera.width / this.camera.zoom) * scale;
+                const viewHeight = (this.camera.height / this.camera.zoom) * scale;
+                
+                mm.strokeStyle = 'rgba(56, 189, 248, 0.5)';
+                mm.lineWidth = 1;
+                mm.strokeRect(camCenterX - viewWidth / 2, camCenterY - viewHeight / 2, viewWidth, viewHeight);
+            }
+
+            loop() {
+                if (this.destroyed) return;
+                this.update();
+                this.draw();
+                if (!this.gameOver) {
+                    this.animationFrameId = requestAnimationFrame(this.loop);
+                } else {
+                    this.animationFrameId = null;
+                }
+            }
+
+            destroy() {
+                this.destroyed = true;
+                this.gameOver = true;
+                if (this.animationFrameId) {
+                    cancelAnimationFrame(this.animationFrameId);
+                    this.animationFrameId = null;
+                }
+                if (this.handleResize) {
+                    window.removeEventListener('resize', this.handleResize);
+                }
+            }
+        }
+
+        // Start Game
+        window.onload = () => {
+            hydrateCharacterList({ restart: false });
+            startSimulation();
+            
+            // 사용자 인터랙션 후 오디오 활성화
+            const enableAudio = () => {
+                soundManager.resumeAudio();
+                document.removeEventListener('click', enableAudio);
+                document.removeEventListener('keydown', enableAudio);
+            };
+            document.addEventListener('click', enableAudio);
+            document.addEventListener('keydown', enableAudio);
+        };
+    </script>
+</body>
+
+</html>
