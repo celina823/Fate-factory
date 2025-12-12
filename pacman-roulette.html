@@ -1,0 +1,1731 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>팩맨 생존 룰렛</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --maze-bg: #222222;
+            --wall: #169976;
+            --grid-size: 27;
+            --cell: 38px;
+            --pacman: #1DCD9F;
+            --runner: #1DCD9F;
+            --danger: #169976;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Do Hyeon', sans-serif;
+            background: #000000;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, #222222 2px, #222222 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, #222222 2px, #222222 4px);
+            background-size: 20px 20px;
+            color: #1DCD9F;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+        }
+        .app {
+            width: min(1360px, 100%);
+            display: grid;
+            grid-template-columns: minmax(320px, 420px) 1fr;
+            gap: 32px;
+            align-items: start;
+        }
+        .panel, .maze-shell {
+            background: #222222;
+            border-radius: 4px;
+            border: 3px solid #1DCD9F;
+            box-shadow: 0 0 0 2px #169976, 0 8px 32px rgba(0, 0, 0, 0.8);
+            padding: 30px;
+        }
+        .panel h1 {
+            margin: 0 0 10px;
+            font-size: 34px;
+            color: #1DCD9F;
+            text-shadow: 2px 2px 0 #000000, 4px 4px 0 #169976;
+        }
+        .panel p {
+            margin: 0 0 18px;
+            color: #1DCD9F;
+            line-height: 1.4;
+        }
+        .shared-banner {
+            background: #000000;
+            border: 2px solid #1DCD9F;
+            border-radius: 4px;
+            padding: 12px 18px;
+            margin-bottom: 18px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .shared-banner button {
+            border-radius: 4px;
+            border: 2px solid #169976;
+            padding: 10px 18px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .shared-banner .primary {
+            background: #1DCD9F;
+            color: #000000;
+            box-shadow: 0 4px 0 #169976, 0 0 0 2px #000000;
+        }
+        .controls {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+        button {
+            flex: 1;
+            border: none;
+            border-radius: 16px;
+            font-size: 18px;
+            padding: 14px 18px;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+        }
+        button:disabled { opacity: 0.45; cursor: not-allowed; }
+        .start-btn {
+            background: #1DCD9F;
+            color: #000000;
+            border: 2px solid #169976;
+            box-shadow: 0 4px 0 #169976, 0 0 0 2px #000000;
+        }
+        .reset-btn {
+            background: #222222;
+            color: #1DCD9F;
+            border: 2px solid #1DCD9F;
+            box-shadow: 0 4px 0 #000000;
+        }
+        .toast {
+            min-height: 32px;
+            color: #1DCD9F;
+            font-size: 18px;
+            margin-bottom: 16px;
+            text-shadow: 1px 1px 0 #000000;
+        }
+        .scoreboard {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+        .scoreboard .entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            border-radius: 4px;
+            background: #000000;
+            border: 2px solid #169976;
+            color: #1DCD9F;
+        }
+        .scoreboard .entry.targeted {
+            border-color: #1DCD9F;
+            background: #222222;
+            color: #1DCD9F;
+            box-shadow: 0 0 0 2px #169976;
+        }
+        .scoreboard .entry.out {
+            border-color: #169976;
+            background: #000000;
+            color: #169976;
+            opacity: 0.6;
+        }
+        .scoreboard .entry.winner {
+            border-color: #1DCD9F;
+            background: #1DCD9F;
+            color: #000000;
+            box-shadow: 0 0 0 2px #169976;
+        }
+        .maze-shell {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            height: 100%;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            color: #1DCD9F;
+            font-size: 16px;
+        }
+        #maze {
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(var(--grid-size), var(--cell));
+            grid-template-rows: repeat(var(--grid-size), var(--cell));
+            gap: 4px;
+            padding: 14px;
+            border-radius: 4px;
+            background: var(--maze-bg);
+            border: 3px solid #1DCD9F;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 0 0 2px #169976;
+        }
+        .actors-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+        .cell {
+            width: var(--cell);
+            height: var(--cell);
+            border-radius: 10px;
+        }
+        .cell.wall {
+            background: var(--wall);
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.4);
+        }
+        .cell.path {
+            background: #000000;
+        }
+        .actor {
+            position: absolute;
+            width: var(--cell);
+            height: var(--cell);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 600;
+            pointer-events: none;
+            left: 0;
+            top: 0;
+        }
+        .actor.pacman {
+            background: var(--pacman);
+            color: #000000;
+            border-radius: 50%;
+            box-shadow: 0 0 0 2px #169976, 0 8px 16px rgba(29, 205, 159, 0.4);
+            clip-path: polygon(0% 0%, 100% 0%, 65% 50%, 100% 100%, 0% 100%);
+            transform-origin: 50% 50%;
+        }
+        .actor.runner {
+            background: #000000;
+            border: 2px solid #1DCD9F;
+            border-radius: 4px;
+            color: #1DCD9F;
+            animation: float 0.9s ease-in-out infinite alternate;
+        }
+        .actor.runner.danger {
+            border-color: #169976;
+            color: #169976;
+            box-shadow: 0 0 0 2px #1DCD9F, 0 0 20px rgba(22, 153, 118, 0.6);
+        }
+        .actor.runner.winner {
+            border-color: #1DCD9F;
+            background: #1DCD9F;
+            color: #000000;
+            box-shadow: 0 0 0 2px #169976, 0 0 30px rgba(29, 205, 159, 0.8);
+            animation: winnerPulse 1.2s ease-in-out infinite;
+        }
+        .actor.runner.targeted {
+            box-shadow: 0 0 0 2px #1DCD9F, 0 0 24px rgba(29, 205, 159, 0.6);
+        }
+        @keyframes winnerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        @keyframes float {
+            from { transform: translateY(-1px) scale(0.97); }
+            to { transform: translateY(1px) scale(1.03); }
+        }
+        @media (max-width: 980px) {
+            .app {
+                grid-template-columns: 1fr;
+                padding: 12px;
+            }
+            #maze { --cell: 32px; }
+        }
+        .win-banner {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.8);
+            font-size: clamp(48px, 6vw, 86px);
+            font-weight: 700;
+            color: #1DCD9F;
+            text-shadow: 2px 2px 0 #000000, 4px 4px 0 #169976, 0 0 30px rgba(29, 205, 159, 0.6);
+            opacity: 0;
+            transform: scale(0.5) rotate(-5deg);
+            transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 1000;
+        }
+        .win-banner.show {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+            animation: winShake 0.5s ease-in-out 0.8s, winGlow 2s ease-in-out infinite 1.3s;
+        }
+        @keyframes winShake {
+            0%, 100% { transform: scale(1) rotate(0deg) translateX(0); }
+            25% { transform: scale(1.05) rotate(-2deg) translateX(-5px); }
+            75% { transform: scale(1.05) rotate(2deg) translateX(5px); }
+        }
+        @keyframes winGlow {
+            0%, 100% { text-shadow: 0 0 30px rgba(255, 208, 96, 0.6), 0 0 60px rgba(255, 208, 96, 0.4); }
+            50% { text-shadow: 0 0 50px rgba(255, 208, 96, 0.9), 0 0 100px rgba(255, 208, 96, 0.6), 0 0 150px rgba(255, 208, 96, 0.3); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <section class="panel">
+            <h1>팩맨 생존 룰렛</h1>
+            <p>빠르게 도망치는 참가자들과 폭주하는 팩맨! 마지막까지 생존하는 이름이 오늘의 주인공이에요.</p>
+            <div class="shared-banner">
+                <button type="button" class="primary" id="goHubBtn">카테고리로 돌아가기</button>
+            </div>
+            <div class="controls">
+                <button class="start-btn" id="startBtn">스타트</button>
+                <button class="reset-btn" id="resetBtn">리셋</button>
+            </div>
+            <div class="toast" id="toast">준비 완료!</div>
+            <div class="scoreboard" id="scoreboard"></div>
+        </section>
+        <section class="maze-shell">
+            <div class="status-bar">
+                <span id="speedLabel">속도 x1.0</span>
+                <span id="aliveLabel">생존: 10명</span>
+            </div>
+            <div id="maze"></div>
+        </section>
+    </div>
+    <div class="win-banner" id="winBanner"></div>
+    <script>
+        if (false) {
+        const NAMES = ['김민수','박서연','이도윤','정하은','최유진','한지민','서준호','윤채린','오세훈','장유나'];
+        const GRID = [
+            '111111111111111111111111111',
+            '100000000000000000000000001',
+            '101111111111011111111111101',
+            '101000000001010000000001101',
+            '101011111101010111111101101',
+            '101010000101010100001101101',
+            '101010111101010111101101101',
+            '101010100001000100101101101',
+            '101010101111111101101101101',
+            '101000101000000001001001101',
+            '101110101011111101011101101',
+            '100010001000100001000100001',
+            '111011101110101011101110111',
+            '100010001000101000100010001',
+            '101111101111101011111011101',
+            '101000001000001000001000101',
+            '101011101011111011101011101',
+            '101000101000001000101000101',
+            '101110101111101111101110101',
+            '101000100000001000000100101',
+            '101011111111101011111111101',
+            '101000000000101000000000101',
+            '101111111101101011111111101',
+            '100000000001001000000000001',
+            '101111111111101111111111101',
+            '100000000000000000000000001',
+            '111111111111111111111111111'
+        ];
+        const gridSize = GRID.length;
+        const GLOBAL_SPEED = 16;
+        const RUNNER_STEP_SPEED = 1;
+        const BASE_PAC_SPEED = RUNNER_STEP_SPEED * 1.2;
+        const PAC_BURST_MULTIPLIER = 2;
+        const PAC_BURST_INTERVAL = 8000;
+        const PAC_BURST_DURATION = 1500;
+        const RUNNER_REVERSE_COOLDOWN = 1000;
+
+        const mazeEl = document.getElementById('maze');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const toastEl = document.getElementById('toast');
+        const scoreboardEl = document.getElementById('scoreboard');
+        const speedLabel = document.getElementById('speedLabel');
+        const aliveLabel = document.getElementById('aliveLabel');
+
+        let actorsLayer = null;
+        let cellRefs = [];
+        let pacman = null;
+        let runners = [];
+        let running = false;
+        let loopHandle = null;
+        let lastFrameTime = 0;
+        let startTimestamp = 0;
+        let targetRunner = null;
+        let targetTimer = null;
+        const TARGET_SWITCH_MS = 6000;
+        let pacmanStepCarry = 0;
+        let pacBurstUntil = 0;
+        let pacNextBurst = 0;
+        let runnerProgress = 0;
+        let allowSmoothMotion = true;
+        let distanceField = [];
+        let audioCtx = null;
+        let musicGain = null;
+        let musicInterval = null;
+
+        function createMaze() {
+            mazeEl.innerHTML = '';
+            cellRefs = [];
+            GRID.forEach(row => {
+                row.split('').forEach(cell => {
+                    const div = document.createElement('div');
+                    div.className = `cell ${cell === '1' ? 'wall' : 'path'}`;
+                    cellRefs.push(div);
+                    mazeEl.appendChild(div);
+                });
+            });
+            actorsLayer = document.createElement('div');
+            actorsLayer.className = 'actors-layer';
+            mazeEl.appendChild(actorsLayer);
+        }
+
+        function cellToPixel(pos) {
+            const cell = cellRefs[pos.y * gridSize + pos.x];
+            if (!cell) return { left: 0, top: 0 };
+            return {
+                left: cell.offsetLeft,
+                top: cell.offsetTop
+            };
+        }
+
+        function placeActors() {
+            actorsLayer.innerHTML = '';
+            const openCells = [];
+            GRID.forEach((row, y) => row.split('').forEach((cell, x) => {
+                if (cell === '0') openCells.push({ x, y });
+            }));
+            const takeCell = () => {
+                const idx = Math.floor(Math.random() * openCells.length);
+                return openCells.splice(idx, 1)[0];
+            };
+            const center = { x: Math.floor(gridSize / 2), y: Math.floor(gridSize / 2) };
+            let pacSpawn = center;
+            if (!isWalkable(center.x, center.y)) {
+                pacSpawn = takeCell();
+            } else {
+                const index = openCells.findIndex(c => c.x === center.x && c.y === center.y);
+                if (index !== -1) openCells.splice(index, 1);
+            }
+            pacman = {
+                name: '팩맨',
+                pos: pacSpawn,
+                dir: { dx: 1, dy: 0 },
+                el: document.createElement('div')
+            };
+            pacman.el.className = 'actor pacman';
+            pacman.el.textContent = '⚡';
+            actorsLayer.appendChild(pacman.el);
+
+            runners = NAMES.map(name => ({
+                name,
+                alive: true,
+                pos: takeCell(),
+                el: document.createElement('div'),
+            outOrder: null,
+            lastDir: { dx: 0, dy: 0 },
+            lastReverseAt: 0
+            }));
+            runners.forEach(r => {
+                r.el.className = 'actor runner';
+                r.el.textContent = nameInitial(r.name);
+                actorsLayer.appendChild(r.el);
+            });
+            updateActorPositions(true);
+            updateTargetHighlight();
+            updateDistanceField();
+        }
+
+        function nameInitial(name) {
+            return name.slice(0, 2);
+        }
+
+        function updateActorPositions(initial = false) {
+            const moveActor = (actor) => {
+                const { left, top } = cellToPixel(actor.pos);
+                const rotation = actor === pacman ? headingToDeg(pacman.dir) : null;
+                const canAnimate = !initial && allowSmoothMotion && typeof anime !== 'undefined';
+                if (!canAnimate) {
+                    actor.el.style.left = `${left}px`;
+                    actor.el.style.top = `${top}px`;
+                    if (rotation !== null) {
+                        actor.el.style.transform = `rotate(${rotation}deg)`;
+                    }
+                    return;
+                }
+                const config = {
+                    targets: actor.el,
+                    left: `${left}px`,
+                    top: `${top}px`,
+                    duration: 260,
+                    easing: 'easeInOutQuad'
+                };
+                if (rotation !== null) {
+                    config.rotate = `${rotation}deg`;
+                }
+                anime(config);
+            };
+            moveActor(pacman);
+            runners.filter(r => r.alive).forEach(moveActor);
+        }
+
+        function refreshUI() {
+            scoreboardEl.innerHTML = '';
+            runners.forEach((runner, index) => {
+                const div = document.createElement('div');
+                div.className = 'entry';
+                let statusText = '생존';
+                if (!runner.alive) {
+                    statusText = runner.outOrder === runners.length
+                        ? '우승'
+                        : `${runner.outOrder}차 탈락`;
+                }
+                div.innerHTML = '<span>' + (index + 1) + '. ' + runner.name + '</span><span>' + statusText + '</span>';
+                if (runner === targetRunner && runner.alive) {
+                    div.classList.add('targeted');
+                }
+                if (!runner.alive) {
+                    if (runner.outOrder === runners.length) {
+                        div.classList.add('winner');
+                    } else {
+                        div.classList.add('out');
+                    }
+                }
+                scoreboardEl.appendChild(div);
+            });
+            const aliveCount = runners.filter(r => r.alive).length;
+            aliveLabel.textContent = `생존: ${aliveCount}명`;
+        }
+
+        function updateTargetHighlight() {
+            runners.forEach(runner => {
+                const targeted = runner === targetRunner && runner.alive;
+                runner.el.classList.toggle('targeted', targeted);
+            });
+        }
+
+        function chooseNewTarget({ forceChange = false, announce = false } = {}) {
+            const alive = runners.filter(r => r.alive);
+            if (!alive.length) {
+                targetRunner = null;
+                updateTargetHighlight();
+                return null;
+            }
+            if (!forceChange && targetRunner && targetRunner.alive) {
+                updateTargetHighlight();
+                refreshUI();
+                return targetRunner;
+            }
+            let pool = alive;
+            if (forceChange && alive.length > 1 && targetRunner && targetRunner.alive) {
+                pool = alive.filter(r => r !== targetRunner);
+                if (!pool.length) pool = alive;
+            }
+            targetRunner = pool[Math.floor(Math.random() * pool.length)];
+            updateTargetHighlight();
+            refreshUI();
+            if (announce && targetRunner) {
+                toastEl.textContent = `${targetRunner.name} 추적 중!`;
+            }
+            return targetRunner;
+        }
+
+        function startTargetCycle() {
+            stopTargetCycle();
+            chooseNewTarget({ forceChange: true, announce: true });
+            targetTimer = setInterval(() => {
+                if (!running) return;
+                chooseNewTarget({ forceChange: true, announce: true });
+            }, TARGET_SWITCH_MS);
+        }
+
+        function stopTargetCycle() {
+            clearInterval(targetTimer);
+            targetTimer = null;
+        }
+
+        function ensureTarget() {
+            if (targetRunner && targetRunner.alive) {
+                return targetRunner;
+            }
+            return chooseNewTarget({ forceChange: false, announce: false });
+        }
+
+        function finishGame(message) {
+            running = false;
+            toastEl.textContent = message;
+            startBtn.disabled = false;
+            stopTargetCycle();
+            stopLoop();
+            stopMusic();
+            targetRunner = null;
+            pacmanStepCarry = 0;
+            pacBurstUntil = 0;
+            pacNextBurst = 0;
+            runnerProgress = 0;
+            allowSmoothMotion = true;
+            updateTargetHighlight();
+            updateActorPositions();
+            refreshUI();
+            updateSpeedIndicator();
+        }
+
+        function ensureAudioContext() {
+            if (!audioCtx) {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioCtx();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function startMusic() {
+            if (musicInterval) return;
+            const ctx = ensureAudioContext();
+            musicGain = ctx.createGain();
+            musicGain.gain.value = 0.18;
+            musicGain.connect(ctx.destination);
+            const pattern = [
+                { freq: 659.25, len: 0.16 },
+                { freq: 783.99, len: 0.16 },
+                { freq: 987.77, len: 0.16 },
+                { freq: 783.99, len: 0.16 },
+                { freq: 659.25, len: 0.16 },
+                { freq: 493.88, len: 0.16 },
+                { freq: 523.25, len: 0.32 },
+            ];
+            let stepIndex = 0;
+            musicInterval = setInterval(() => {
+                const note = pattern[stepIndex % pattern.length];
+                const t0 = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(note.freq, t0);
+                const noteGain = ctx.createGain();
+                noteGain.gain.setValueAtTime(0.0001, t0);
+                noteGain.gain.linearRampToValueAtTime(musicGain.gain.value, t0 + 0.02);
+                noteGain.gain.exponentialRampToValueAtTime(0.0001, t0 + note.len);
+                osc.connect(noteGain).connect(musicGain);
+                osc.start(t0);
+                osc.stop(t0 + note.len + 0.05);
+                stepIndex++;
+            }, 150);
+        }
+
+        function stopMusic() {
+            if (musicInterval) {
+                clearInterval(musicInterval);
+                musicInterval = null;
+            }
+            if (musicGain) {
+                musicGain.disconnect();
+                musicGain = null;
+            }
+        }
+
+        function playCaptureSound() {
+            const ctx = ensureAudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            const baseFreq = 420 + Math.random() * 180;
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(baseFreq, ctx.currentTime);
+            gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.32);
+        }
+
+        function startLoop() {
+            stopLoop();
+            lastFrameTime = performance.now();
+            loopHandle = requestAnimationFrame(gameLoop);
+        }
+
+        function stopLoop() {
+            if (loopHandle) {
+                cancelAnimationFrame(loopHandle);
+                loopHandle = null;
+            }
+        }
+
+        function gameLoop(timestamp) {
+            if (!running) return;
+            if (!lastFrameTime) {
+                lastFrameTime = timestamp;
+            }
+            let dt = timestamp - lastFrameTime;
+            lastFrameTime = timestamp;
+            dt = Math.min(dt, 120);
+            stepGame(dt * GLOBAL_SPEED, timestamp);
+            if (running) {
+                loopHandle = requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function isWalkable(x, y) {
+            return x >= 0 && y >= 0 && x < gridSize && y < gridSize && GRID[y][x] === '0';
+        }
+
+        function neighbors({ x, y }) {
+            return [
+                { x: x + 1, y: y },
+                { x: x - 1, y: y },
+                { x: x,     y: y + 1 },
+                { x: x,     y: y - 1 }
+            ].filter(n => isWalkable(n.x, n.y));
+        }
+
+        function findNextStep(start, targetPos) {
+            if (!targetPos) return null;
+            const startKey = `${start.x},${start.y}`;
+            const targetKey = `${targetPos.x},${targetPos.y}`;
+            const queue = [start];
+            const parents = new Map();
+            parents.set(startKey, null);
+            while (queue.length) {
+                const current = queue.shift();
+                const key = `${current.x},${current.y}`;
+                if (key === targetKey) {
+                    const path = [];
+                    let curKey = key;
+                    while (curKey && curKey !== startKey) {
+                        path.unshift(curKey);
+                        curKey = parents.get(curKey);
+                    }
+                    if (!path.length) return { next: targetPos, dir: { dx: 0, dy: 0 } };
+                    const [nx, ny] = path[0].split(',').map(Number);
+                    return {
+                        next: { x: nx, y: ny },
+                        dir: { dx: Math.sign(nx - start.x), dy: Math.sign(ny - start.y) }
+                    };
+                }
+                neighbors(current).forEach(n => {
+                    const nKey = `${n.x},${n.y}`;
+                    if (!parents.has(nKey)) {
+                        parents.set(nKey, key);
+                        queue.push(n);
+                    }
+                });
+            }
+            return null;
+        }
+
+        function updateDistanceField() {
+            distanceField = Array.from({ length: gridSize }, () => Array(gridSize).fill(Infinity));
+            const queue = [pacman.pos];
+            distanceField[pacman.pos.y][pacman.pos.x] = 0;
+            while (queue.length) {
+                const current = queue.shift();
+                const currentDist = distanceField[current.y][current.x];
+                neighbors(current).forEach(n => {
+                    if (distanceField[n.y][n.x] > currentDist + 1) {
+                        distanceField[n.y][n.x] = currentDist + 1;
+                        queue.push(n);
+                    }
+                });
+            }
+        }
+
+        function getDistanceValue(pos) {
+            if (!distanceField.length) return Infinity;
+            return distanceField[pos.y]?.[pos.x] ?? Infinity;
+        }
+
+        function ensureBurstSchedule(now) {
+            if (!pacNextBurst) pacNextBurst = now + PAC_BURST_INTERVAL;
+            if (now >= pacNextBurst) {
+                pacBurstUntil = now + PAC_BURST_DURATION;
+                pacNextBurst = now + PAC_BURST_INTERVAL;
+            }
+        }
+
+        function currentPacmanSpeed(now = performance.now()) {
+            const burstActive = now < pacBurstUntil;
+            return BASE_PAC_SPEED * (burstActive ? PAC_BURST_MULTIPLIER : 1);
+        }
+
+        function runnerMove(runner) {
+            const options = neighbors(runner.pos);
+            if (!options.length) return;
+            const now = performance.now();
+            const isOpposite = (opt) => {
+                const dx = opt.x - runner.pos.x;
+                const dy = opt.y - runner.pos.y;
+                return runner.lastDir && runner.lastDir.dx === -dx && runner.lastDir.dy === -dy;
+            };
+            const usableOptions = options.filter(opt => {
+                if (!isOpposite(opt)) return true;
+                if (options.length === 1) return true;
+                return (now - runner.lastReverseAt) > RUNNER_REVERSE_COOLDOWN;
+            });
+            const candidates = usableOptions.length ? usableOptions : options;
+            const scoreFor = (opt) => {
+                const dist = getDistanceValue(opt);
+                return (Number.isFinite(dist) ? dist : -Infinity) + Math.random() * 0.02;
+            };
+            const ranked = candidates.slice().sort((a, b) => scoreFor(b) - scoreFor(a));
+            const prevPos = { ...runner.pos };
+            const nextPos = ranked[0];
+            const wentOpposite = isOpposite(nextPos);
+            runner.pos = nextPos;
+            runner.lastDir = {
+                dx: nextPos.x - prevPos.x,
+                dy: nextPos.y - prevPos.y
+            };
+            if (wentOpposite) {
+                runner.lastReverseAt = now;
+            }
+        }
+
+        function distanceSquared(a, b) {
+            return (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
+        }
+
+        function headingToDeg(dir) {
+            if (!dir) return 0;
+            if (dir.dx === 1) return 0;
+            if (dir.dx === -1) return 180;
+            if (dir.dy === 1) return 90;
+            if (dir.dy === -1) return 270;
+            return 0;
+        }
+
+        function getSpeedMultiplier() {
+            if (!running) return 1;
+            return currentPacmanSpeed() / RUNNER_STEP_SPEED;
+        }
+
+        function checkCaptures() {
+            let capturedRunner = null;
+            let order = runners.filter(r => !r.alive).length;
+            runners.forEach(runner => {
+                if (runner.alive && runner.pos.x === pacman.pos.x && runner.pos.y === pacman.pos.y) {
+                    runner.alive = false;
+                    order += 1;
+                    runner.outOrder = order;
+                    runner.el.classList.add('danger');
+                    if (!capturedRunner) {
+                        capturedRunner = runner;
+                    }
+                }
+            });
+            if (capturedRunner) {
+                toastEl.textContent = `${capturedRunner.name} 탈락!`;
+                playCaptureSound();
+                return capturedRunner;
+            }
+            return null;
+        }
+
+        function stepGame(dtMs, timestamp) {
+            if (!running) return;
+            let survivors = runners.filter(r => r.alive);
+            if (!survivors.length) {
+                finishGame('모든 참가자가 사라졌어요!');
+                return;
+            }
+            const now = timestamp ?? performance.now();
+            ensureBurstSchedule(now);
+            const dtSec = dtMs / 1000;
+            pacmanStepCarry += dtSec * currentPacmanSpeed(now);
+            let pacSteps = Math.floor(pacmanStepCarry);
+            if (pacSteps > 0) {
+                allowSmoothMotion = pacSteps <= 4;
+                pacmanStepCarry -= pacSteps;
+                for (let i = 0; i < pacSteps; i++) {
+                    const currentTarget = ensureTarget();
+                    if (!currentTarget) break;
+                    let step = findNextStep(pacman.pos, currentTarget.pos);
+                    if (!step || !step.next) {
+                        const fallback = neighbors(pacman.pos);
+                        if (fallback.length) {
+                            const nextCell = fallback[Math.floor(Math.random() * fallback.length)];
+                            step = {
+                                next: nextCell,
+                                dir: { dx: nextCell.x - pacman.pos.x, dy: nextCell.y - pacman.pos.y }
+                            };
+                        }
+                    }
+                    if (step && step.next) {
+                        pacman.dir = step.dir;
+                        pacman.pos = step.next;
+                        const captured = checkCaptures();
+                        if (captured && captured === targetRunner) {
+                            chooseNewTarget({ forceChange: true, announce: true });
+                        }
+                    } else {
+                        break;
+                    }
+                }
+            } else {
+                allowSmoothMotion = true;
+            }
+            updateDistanceField();
+            survivors = runners.filter(r => r.alive);
+            if (!survivors.length) {
+                finishGame('모든 참가자가 사라졌어요!');
+                return;
+            }
+            if (survivors.length === 1) {
+                const winner = survivors[0];
+                winner.alive = false;
+                winner.outOrder = runners.length;
+                finishGame(`🎉 ${winner.name} 우승!`);
+                return;
+            }
+            runnerProgress += dtSec * RUNNER_STEP_SPEED;
+            let runnerSteps = Math.floor(runnerProgress);
+            if (runnerSteps > 0) {
+                runnerProgress -= runnerSteps;
+                for (let i = 0; i < runnerSteps; i++) {
+                    survivors = runners.filter(r => r.alive);
+                    if (!survivors.length) {
+                        finishGame('모든 참가자가 사라졌어요!');
+                        return;
+                    }
+                    survivors.forEach(runnerMove);
+                }
+            }
+            updateActorPositions();
+            refreshUI();
+            updateSpeedIndicator();
+        }
+
+        function updateSpeedIndicator() {
+            const mult = running ? getSpeedMultiplier() : 1;
+            speedLabel.textContent = `속도 x${mult.toFixed(1)}`;
+        }
+
+        function resetGame() {
+            running = false;
+            stopLoop();
+            lastFrameTime = 0;
+            startBtn.disabled = false;
+            toastEl.textContent = '준비 완료!';
+            runners = [];
+            createMaze();
+            placeActors();
+            refreshUI();
+            speedLabel.textContent = '속도 x1.0';
+            aliveLabel.textContent = `생존: ${NAMES.length}명`;
+            stopTargetCycle();
+            stopMusic();
+            targetRunner = null;
+            pacmanStepCarry = 0;
+            pacBurstUntil = 0;
+            pacNextBurst = 0;
+            runnerProgress = 0;
+            allowSmoothMotion = true;
+            updateTargetHighlight();
+        }
+
+
+        startBtn.addEventListener('click', () => {
+            if (running) return;
+            running = true;
+            startBtn.disabled = true;
+            toastEl.textContent = '사냥 시작!';
+            const now = performance.now();
+            startTimestamp = now;
+            pacmanStepCarry = 0;
+            pacBurstUntil = 0;
+            pacNextBurst = now + PAC_BURST_INTERVAL;
+            runnerProgress = 0;
+            allowSmoothMotion = true;
+            ensureAudioContext();
+            startMusic();
+            startTargetCycle();
+            startLoop();
+        });
+
+        resetBtn.addEventListener('click', resetGame);
+
+        window.addEventListener('load', resetGame);
+        }
+    </script>
+    <script>
+        (function () {
+            const MIN_NAMES = 4;
+            const DEFAULT_NAMES = ['김민수','박서연','이도윤','정하은','최유진','한지민','서준호','윤채린','오세훈','장유나'];
+            const NAMES = [...DEFAULT_NAMES];
+            const ZUSTAND_STORAGE_KEY = 'roulette-items';
+            const GRID = [
+                '111111111111111111111111111',
+                '100000000000000000000000001',
+                '101111101111101111101111101',
+                '100000101000101000101000001',
+                '101110101011101011101011101',
+                '101000101000001000001000101',
+                '101011101111101111101111101',
+                '100000000000101000000000001',
+                '101111101111101111101111101',
+                '100000101000000000001000001',
+                '101110101011111111101011101',
+                '101000101000000000001000101',
+                '101011101111101111101111101',
+                '100000000000101000000000001',
+                '101111101111101111101111101',
+                '100000101000000000001000001',
+                '101110101011111111101011101',
+                '101000101000000000001000101',
+                '101011101111101111101111101',
+                '100000000000101000000000001',
+                '101111101111101111101111101',
+                '100000101000000000001000001',
+                '101110101011111111101011101',
+                '101000101000000000001000101',
+                '101011101111101111101111101',
+                '100000000000000000000000001',
+                '111111111111111111111111111'
+            ];
+            const GRID_SIZE = GRID.length;
+            const GLOBAL_SPEED = 16;
+            const RUNNER_SPEED = 1;
+            const PAC_BASE_SPEED = RUNNER_SPEED * 1.2;
+            const BURST_INTERVAL = 8000;
+            const BURST_DURATION = 1500;
+            const BURST_MULT = 2;
+            const RUNNER_REVERSE_COOLDOWN = 1000;
+            const SMOOTH_THRESHOLD = 4;
+
+            const mazeEl = document.getElementById('maze');
+            const startBtn = document.getElementById('startBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const toastEl = document.getElementById('toast');
+            const scoreboardEl = document.getElementById('scoreboard');
+            const speedLabel = document.getElementById('speedLabel');
+            const aliveLabel = document.getElementById('aliveLabel');
+            const winBanner = document.getElementById('winBanner');
+            const goHubBtn = document.getElementById('goHubBtn');
+
+            let actorsLayer = null;
+            let cellRefs = [];
+            let cellSizePx = 38;
+            let cellStridePx = 42;
+
+            const state = {
+                pacman: null,
+                runners: [],
+                target: null,
+                targetTimer: null,
+                distance: [],
+                running: false,
+                lastTs: 0,
+                pacCarryPx: 0,
+                pacBurstUntil: 0,
+                pacNextBurst: 0,
+                allowSmooth: true,
+                loopHandle: null,
+                audioCtx: null,
+                musicGain: null,
+                musicTimer: null
+            };
+
+            window.addEventListener('load', init);
+
+            const sanitizeList = list => list.map(name => name.trim()).filter(Boolean);
+
+            function loadSharedNames(minRequired = MIN_NAMES) {
+                try {
+                    const raw = localStorage.getItem(ZUSTAND_STORAGE_KEY);
+                    if (!raw) return null;
+                    const parsed = JSON.parse(raw);
+                    // Zustand persist 형식: { state: { items: [...] } } 또는 직접 { items: [...] }
+                    let items = null;
+                    if (parsed.state && Array.isArray(parsed.state.items)) {
+                        items = parsed.state.items;
+                    } else if (Array.isArray(parsed.items)) {
+                        items = parsed.items;
+                    }
+                    if (!items) return null;
+                    const clean = sanitizeList(items);
+                    return clean.length >= minRequired ? clean : null;
+                } catch {
+                    return null;
+                }
+            }
+
+            function applySharedNames(list, message) {
+                NAMES.splice(0, NAMES.length, ...list);
+                const preview = list.slice(0, 5).join(', ');
+                const suffix = list.length ? ` (예: ${preview}${list.length > 5 ? '…' : ''})` : '';
+                toast(`${message}${suffix}`);
+            }
+
+            function hydrateNamesFromStorage(options = { alertOnMissing: false, restart: false }) {
+                const shared = loadSharedNames();
+                if (shared) {
+                    applySharedNames(shared, `카테고리 페이지에서 전달된 참가자 ${shared.length}명을 사용합니다.`);
+                    if (options.restart) resetGame();
+                    return true;
+                }
+                if (options.alertOnMissing) {
+                    alert('공유된 참가자 목록을 찾을 수 없습니다. 카테고리 페이지에서 항목을 설정해 주세요.');
+                }
+                if (!NAMES.length) {
+                    applySharedNames(DEFAULT_NAMES, `기본 참가자 ${DEFAULT_NAMES.length}명을 사용합니다.`);
+                    if (options.restart) resetGame();
+                }
+                return false;
+            }
+
+            if (goHubBtn) {
+                goHubBtn.addEventListener('click', () => {
+                    window.location.href = '/';
+                });
+            }
+
+            function hasEnoughNames() {
+                return NAMES.length >= MIN_NAMES;
+            }
+
+            function init() {
+                hydrateNamesFromStorage({ restart: false });
+                if (!NAMES.length) {
+                    // 최종적으로도 비어있지 않도록 기본값 보정
+                    applySharedNames(DEFAULT_NAMES, `기본 참가자 ${DEFAULT_NAMES.length}명을 사용합니다.`);
+                }
+                buildMaze();
+                measureCells();
+                spawnActors();
+                resetGame();
+                startBtn.addEventListener('click', startGame);
+                resetBtn.addEventListener('click', resetGame);
+                if (goHubBtn) {
+                    // already wired above
+                }
+            }
+
+            function buildMaze() {
+                mazeEl.innerHTML = '';
+                cellRefs = [];
+                GRID.forEach(row => {
+                    row.split('').forEach(tile => {
+                        const div = document.createElement('div');
+                        div.className = `cell ${tile === '1' ? 'wall' : 'path'}`;
+                        cellRefs.push(div);
+                        mazeEl.appendChild(div);
+                    });
+                });
+                actorsLayer = document.createElement('div');
+                actorsLayer.className = 'actors-layer';
+                mazeEl.appendChild(actorsLayer);
+            }
+
+            function measureCells() {
+                const sample = cellRefs[0];
+                if (!sample) return;
+                const style = getComputedStyle(sample);
+                cellSizePx = parseFloat(style.width) || 38;
+                const gap = parseFloat(getComputedStyle(mazeEl).gap || '4') || 4;
+                cellStridePx = cellSizePx + gap;
+            }
+
+            function spawnActors() {
+                actorsLayer.innerHTML = '';
+                const open = [];
+                GRID.forEach((row, y) => row.split('').forEach((tile, x) => {
+                    if (tile === '0') open.push({ x, y });
+                }));
+                const takeCell = () => open.splice(Math.floor(Math.random() * open.length), 1)[0];
+                const center = { x: Math.floor(GRID_SIZE / 2), y: Math.floor(GRID_SIZE / 2) };
+                let pacSpawn = GRID[center.y][center.x] === '0' ? center : takeCell();
+
+                state.pacman = createActor('pacman', pacSpawn, '팩맨', '⚡');
+                state.pacman.dir = { dx: 1, dy: 0 };
+                actorsLayer.appendChild(state.pacman.el);
+
+                state.runners = NAMES.map(name => {
+                    const cell = takeCell();
+                    const actor = createActor('runner', cell, name, name.slice(0, 2));
+                    actorsLayer.appendChild(actor.el);
+                    return actor;
+                });
+            }
+
+            function createActor(type, grid, name, labelText) {
+                const actor = {
+                    type,
+                    name,
+                    grid: { ...grid },
+                    render: cellToPixel(grid),
+                    segment: null,
+                    carryPx: 0,
+                    speedCells: type === 'pacman' ? PAC_BASE_SPEED : RUNNER_SPEED,
+                    lastDir: { dx: 0, dy: 0 },
+                    lastReverseAt: 0,
+                    rotation: type === 'pacman' ? headingToDeg({ dx: 1, dy: 0 }) : null,
+                    alive: type === 'runner',
+                    outOrder: null,
+                    el: document.createElement('div')
+                };
+                actor.el.className = type === 'pacman' ? 'actor pacman' : 'actor runner';
+                actor.el.textContent = labelText;
+                actor.el.style.left = `${actor.render.left}px`;
+                actor.el.style.top = `${actor.render.top}px`;
+                if (actor.rotation !== null) {
+                    actor.el.style.transform = `rotate(${actor.rotation}deg)`;
+                }
+                return actor;
+            }
+
+            function resetGame() {
+                stopLoop();
+                stopTargetCycle();
+                stopMusic();
+                spawnActors();
+                state.target = null;
+                state.pacCarryPx = 0;
+                state.pacBurstUntil = 0;
+                state.pacNextBurst = performance.now() + BURST_INTERVAL;
+                state.allowSmooth = true;
+                updateDistanceField();
+                renderAllActors();
+                updateTargetHighlight();
+                refreshScoreboard();
+                updateHUD();
+                toast('준비 완료!');
+                hideWinBanner();
+                startBtn.disabled = !hasEnoughNames();
+                state.running = false;
+            }
+
+            function startGame() {
+                if (state.running || !hasEnoughNames()) {
+                    if (!hasEnoughNames()) {
+                        toast(`최소 ${MIN_NAMES}명 이상의 참가자가 필요합니다.`);
+                    }
+                    return;
+                }
+                state.running = true;
+                const now = performance.now();
+                state.lastTs = now;
+                state.pacCarryPx = 0;
+                state.pacBurstUntil = 0;
+                state.pacNextBurst = now + BURST_INTERVAL;
+                state.allowSmooth = true;
+                state.runners.forEach(r => { r.carryPx = 0; r.lastReverseAt = 0; if (r.alive) r.segment = null; });
+                toast('사냥 시작!');
+                startBtn.disabled = true;
+                ensureAudioContext();
+                startMusic();
+                startTargetCycle();
+                state.loopHandle = requestAnimationFrame(gameLoop);
+            }
+
+            function gameLoop(timestamp) {
+                if (!state.running) return;
+                if (!state.lastTs) state.lastTs = timestamp;
+                let dt = timestamp - state.lastTs;
+                state.lastTs = timestamp;
+                dt = Math.min(dt, 120) * GLOBAL_SPEED;
+                updateSimulation(dt, timestamp);
+                if (state.running) {
+                    state.loopHandle = requestAnimationFrame(gameLoop);
+                }
+            }
+
+            function stopLoop() {
+                if (state.loopHandle) {
+                    cancelAnimationFrame(state.loopHandle);
+                    state.loopHandle = null;
+                }
+                state.lastTs = 0;
+            }
+
+            function updateSimulation(dtMs, timestamp) {
+                movePacman(dtMs, timestamp);
+                updateDistanceField();
+                moveRunners(dtMs);
+                renderAllActors();
+                refreshScoreboard();
+                updateHUD(timestamp);
+                checkWin();
+            }
+
+            function movePacman(dtMs, timestamp) {
+                const speedCells = currentPacmanSpeed(timestamp);
+                const speedPx = speedCells * cellStridePx;
+                let budget = state.pacCarryPx + speedPx * (dtMs / 1000);
+                state.allowSmooth = budget / cellStridePx <= SMOOTH_THRESHOLD;
+                budget = advanceActor(state.pacman, budget, requestPacmanStep, onPacmanArrive);
+                state.pacCarryPx = budget;
+            }
+
+            function moveRunners(dtMs) {
+                state.runners.forEach(runner => {
+                    if (!runner.alive) return;
+                    const speedPx = runner.speedCells * cellStridePx;
+                    let budget = (runner.carryPx || 0) + speedPx * (dtMs / 1000);
+                    budget = advanceActor(runner, budget, requestRunnerStep, null);
+                    runner.carryPx = budget;
+                });
+            }
+
+            function advanceActor(actor, budgetPx, requestNext, arrivalCb) {
+                while (budgetPx > 0) {
+                    if (!actor.segment) {
+                        if (!requestNext(actor)) break;
+                    }
+                    const seg = actor.segment;
+                    const remaining = seg.length - seg.progress;
+                    const step = Math.min(remaining, budgetPx);
+                    seg.progress += step;
+                    budgetPx -= step;
+                    const ratio = seg.progress / seg.length;
+                    actor.render = {
+                        left: seg.fromPx.left + (seg.toPx.left - seg.fromPx.left) * ratio,
+                        top: seg.fromPx.top + (seg.toPx.top - seg.fromPx.top) * ratio
+                    };
+                    if (actor === state.pacman && seg.dir) {
+                        actor.rotation = headingToDeg(seg.dir);
+                    }
+                    if (seg.progress >= seg.length - 0.1) {
+                        actor.grid = { ...seg.to };
+                        actor.render = { ...seg.toPx };
+                        actor.segment = null;
+                        if (arrivalCb) arrivalCb(actor);
+                    }
+                }
+                return budgetPx;
+            }
+
+            function requestPacmanStep() {
+                const target = ensureTarget();
+                if (!target) return false;
+                let step = findNextStep(state.pacman.grid, target.grid);
+                if (!step || !step.next) {
+                    const fallback = neighborsOf(state.pacman.grid);
+                    if (!fallback.length) return false;
+                    let candidates = fallback;
+                    if (state.pacman.dir && (state.pacman.dir.dx !== 0 || state.pacman.dir.dy !== 0)) {
+                        candidates = fallback.filter(n => {
+                            const dx = n.x - state.pacman.grid.x;
+                            const dy = n.y - state.pacman.grid.y;
+                            return !(dx === -state.pacman.dir.dx && dy === -state.pacman.dir.dy);
+                        });
+                        if (!candidates.length) candidates = fallback;
+                    }
+                    const nextCell = candidates[Math.floor(Math.random() * candidates.length)];
+                    step = { next: nextCell };
+                } else {
+                    const dx = step.next.x - state.pacman.grid.x;
+                    const dy = step.next.y - state.pacman.grid.y;
+                    if (state.pacman.dir && dx === -state.pacman.dir.dx && dy === -state.pacman.dir.dy) {
+                        const fallback = neighborsOf(state.pacman.grid);
+                        if (fallback.length > 1) {
+                            const alternatives = fallback.filter(n => {
+                                const ndx = n.x - state.pacman.grid.x;
+                                const ndy = n.y - state.pacman.grid.y;
+                                return !(ndx === -state.pacman.dir.dx && ndy === -state.pacman.dir.dy);
+                            });
+                            if (alternatives.length) {
+                                step.next = alternatives[0];
+                            }
+                        }
+                    }
+                }
+                beginSegment(state.pacman, step.next);
+                return true;
+            }
+
+            function requestRunnerStep(runner) {
+                const next = chooseRunnerNextCell(runner);
+                if (!next) return false;
+                beginSegment(runner, next);
+                return true;
+            }
+
+            function beginSegment(actor, nextCell) {
+                const fromPx = cellToPixel(actor.grid);
+                const toPx = cellToPixel(nextCell);
+                const dx = nextCell.x - actor.grid.x;
+                const dy = nextCell.y - actor.grid.y;
+                actor.segment = {
+                    to: { ...nextCell },
+                    fromPx,
+                    toPx,
+                    length: Math.max(1, Math.hypot(toPx.left - fromPx.left, toPx.top - fromPx.top)),
+                    progress: 0,
+                    dir: { dx, dy }
+                };
+                if (actor === state.pacman) {
+                    actor.dir = { dx, dy };
+                } else {
+                    actor.lastDir = { dx, dy };
+                }
+            }
+
+            function renderAllActors() {
+                applyActorStyle(state.pacman);
+                state.runners.forEach(applyActorStyle);
+            }
+
+            function applyActorStyle(actor) {
+                actor.el.style.left = `${actor.render.left}px`;
+                actor.el.style.top = `${actor.render.top}px`;
+                if (actor.rotation != null) {
+                    actor.el.style.transform = `rotate(${actor.rotation}deg)`;
+                }
+            }
+
+            function onPacmanArrive() {
+                const captured = state.runners.filter(r => r.alive && r.grid.x === state.pacman.grid.x && r.grid.y === state.pacman.grid.y);
+                if (!captured.length) return;
+                captured.forEach(runner => {
+                    runner.alive = false;
+                    runner.outOrder = state.runners.filter(r => !r.alive).length;
+                    runner.segment = null;
+                    runner.carryPx = 0;
+                    runner.el.classList.add('danger');
+                });
+                toast(`${captured[0].name} 탈락!`);
+                playCaptureSound();
+                updateTargetHighlight();
+            }
+
+            function checkWin() {
+                const alive = state.runners.filter(r => r.alive);
+                if (!alive.length) {
+                    finishGame('모든 참가자가 사라졌어요!', 'GAME OVER');
+                } else if (alive.length === 1) {
+                    alive[0].alive = false;
+                    alive[0].outOrder = state.runners.length;
+                    alive[0].el.classList.remove('danger');
+                    alive[0].el.classList.add('winner');
+                    finishGame(`🎉 ${alive[0].name} 우승!`, `${alive[0].name} WIN!`);
+                }
+            }
+
+            function finishGame(message, bannerText = '') {
+                state.running = false;
+                toast(message);
+                startBtn.disabled = !hasEnoughNames();
+                stopLoop();
+                stopTargetCycle();
+                stopMusic();
+                state.target = null;
+                state.pacCarryPx = 0;
+                state.pacBurstUntil = 0;
+                state.pacNextBurst = performance.now() + BURST_INTERVAL;
+                state.allowSmooth = true;
+                updateTargetHighlight();
+                refreshScoreboard();
+                updateHUD();
+                if (bannerText) {
+                    showWinBanner(bannerText);
+                } else {
+                    hideWinBanner();
+                }
+            }
+
+            function ensureTarget(force = false, announce = false) {
+                if (!force && state.target && state.target.alive) return state.target;
+                const alive = state.runners.filter(r => r.alive);
+                if (!alive.length) {
+                    state.target = null;
+                    updateTargetHighlight();
+                    return null;
+                }
+                let pool = alive;
+                if (state.target && state.target.alive && alive.length > 1) {
+                    pool = alive.filter(r => r !== state.target);
+                    if (!pool.length) pool = alive;
+                }
+                state.target = pool[Math.floor(Math.random() * pool.length)];
+                if (announce) toast(`${state.target.name} 추적 중!`);
+                updateTargetHighlight();
+                refreshScoreboard();
+                return state.target;
+            }
+
+            function startTargetCycle() {
+                stopTargetCycle();
+                ensureTarget(true, true);
+                state.targetTimer = setInterval(() => {
+                    if (!state.running) return;
+                    ensureTarget(true, true);
+                }, 6000);
+            }
+
+            function stopTargetCycle() {
+                clearInterval(state.targetTimer);
+                state.targetTimer = null;
+            }
+
+            function updateTargetHighlight() {
+                state.runners.forEach(r => {
+                    const targeted = r === state.target && r.alive;
+                    r.el.classList.toggle('targeted', targeted);
+                });
+            }
+
+            function updateDistanceField() {
+                state.distance = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(Infinity));
+                const queue = [state.pacman.grid];
+                state.distance[state.pacman.grid.y][state.pacman.grid.x] = 0;
+                while (queue.length) {
+                    const current = queue.shift();
+                    const base = state.distance[current.y][current.x];
+                    neighborsOf(current).forEach(next => {
+                        if (state.distance[next.y][next.x] > base + 1) {
+                            state.distance[next.y][next.x] = base + 1;
+                            queue.push(next);
+                        }
+                    });
+                }
+            }
+
+            function chooseRunnerNextCell(runner) {
+                const neighbors = neighborsOf(runner.grid);
+                if (!neighbors.length) return null;
+                const now = performance.now();
+                const filtered = neighbors.filter(next => {
+                    const opposite = runner.lastDir.dx === - (next.x - runner.grid.x) && runner.lastDir.dy === - (next.y - runner.grid.y);
+                    if (!opposite) return true;
+                    if (neighbors.length === 1) return true;
+                    return (now - runner.lastReverseAt) > RUNNER_REVERSE_COOLDOWN;
+                });
+                const candidates = filtered.length ? filtered : neighbors;
+                candidates.sort((a, b) => {
+                    const da = state.distance[a.y]?.[a.x] ?? -Infinity;
+                    const db = state.distance[b.y]?.[b.x] ?? -Infinity;
+                    if (da === db) return Math.random() - 0.5;
+                    return db - da;
+                });
+                const chosen = candidates[0];
+                if (!chosen) return null;
+                if (runner.lastDir.dx === -(chosen.x - runner.grid.x) && runner.lastDir.dy === -(chosen.y - runner.grid.y)) {
+                    runner.lastReverseAt = now;
+                }
+                return chosen;
+            }
+
+            function neighborsOf(pos) {
+                const options = [
+                    { x: pos.x + 1, y: pos.y },
+                    { x: pos.x - 1, y: pos.y },
+                    { x: pos.x, y: pos.y + 1 },
+                    { x: pos.x, y: pos.y - 1 }
+                ];
+                return options.filter(n => n.x >= 0 && n.y >= 0 && n.x < GRID_SIZE && n.y < GRID_SIZE && GRID[n.y][n.x] === '0');
+            }
+
+            function findNextStep(start, target) {
+                if (!target) return null;
+                const queue = [start];
+                const parents = new Map();
+                parents.set(`${start.x},${start.y}`, null);
+                const goalKey = `${target.x},${target.y}`;
+                while (queue.length) {
+                    const current = queue.shift();
+                    const key = `${current.x},${current.y}`;
+                    if (key === goalKey) {
+                        const path = [];
+                        let cursor = key;
+                        while (cursor) {
+                            path.unshift(cursor);
+                            cursor = parents.get(cursor);
+                            if (cursor === `${start.x},${start.y}`) break;
+                        }
+                        if (!path.length) return null;
+                        const [nextX, nextY] = path[0].split(',').map(Number);
+                        return { next: { x: nextX, y: nextY } };
+                    }
+                    neighborsOf(current).forEach(next => {
+                        const nKey = `${next.x},${next.y}`;
+                        if (!parents.has(nKey)) {
+                            parents.set(nKey, key);
+                            queue.push(next);
+                        }
+                    });
+                }
+                return null;
+            }
+
+            function headingToDeg(dir) {
+                if (!dir) return 0;
+                if (dir.dx === 1) return 0;
+                if (dir.dx === -1) return 180;
+                if (dir.dy === 1) return 90;
+                if (dir.dy === -1) return 270;
+                return 0;
+            }
+
+            function currentPacmanSpeed(timestamp) {
+                if (!state.running) return PAC_BASE_SPEED;
+                if (timestamp >= state.pacNextBurst) {
+                    state.pacBurstUntil = timestamp + BURST_DURATION;
+                    state.pacNextBurst = timestamp + BURST_INTERVAL;
+                }
+                const burst = timestamp < state.pacBurstUntil;
+                return PAC_BASE_SPEED * (burst ? BURST_MULT : 1);
+            }
+
+            function renderAllHUD() {
+                refreshScoreboard();
+                updateHUD();
+            }
+
+            function refreshScoreboard() {
+                scoreboardEl.innerHTML = '';
+                const alive = state.runners.filter(r => r.alive);
+                const eliminated = state.runners
+                    .filter(r => !r.alive)
+                    .sort((a, b) => (a.outOrder ?? Infinity) - (b.outOrder ?? Infinity));
+                const ordered = [...alive, ...eliminated];
+
+                ordered.forEach((runner, idx) => {
+                    const row = document.createElement('div');
+                    row.className = 'entry';
+
+                    if (runner === state.target && runner.alive) {
+                        row.classList.add('targeted');
+                    }
+                    if (!runner.alive) {
+                        if (runner.outOrder === state.runners.length) row.classList.add('winner');
+                        else row.classList.add('out');
+                    }
+
+                    const status = runner.alive
+                        ? '생존'
+                        : runner.outOrder === state.runners.length
+                            ? '우승'
+                            : `${runner.outOrder ?? '?'}차 탈락`;
+
+                    row.innerHTML = `<span>${idx + 1}. ${runner.name}</span><span>${status}</span>`;
+                    scoreboardEl.appendChild(row);
+                });
+            }
+
+            function updateHUD(timestamp) {
+                const alive = state.runners.filter(r => r.alive).length;
+                aliveLabel.textContent = `생존: ${alive}명`;
+                const speedMult = currentPacmanSpeed(timestamp || performance.now()) / RUNNER_SPEED;
+                speedLabel.textContent = `속도 x${speedMult.toFixed(1)}`;
+            }
+
+            function toast(msg) {
+                toastEl.textContent = msg;
+            }
+
+            function showWinBanner(text) {
+                winBanner.textContent = text;
+                winBanner.classList.add('show');
+                if (text.includes('WIN')) {
+                    playWinSound();
+                }
+            }
+            
+            function playWinSound() {
+                const ctx = ensureAudioContext();
+                const freqs = [523.25, 659.25, 783.99, 1046.50];
+                freqs.forEach((freq, i) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.1);
+                    gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.1);
+                    gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + i * 0.1 + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.1 + 0.5);
+                    osc.connect(gain).connect(ctx.destination);
+                    osc.start(ctx.currentTime + i * 0.1);
+                    osc.stop(ctx.currentTime + i * 0.1 + 0.55);
+                });
+            }
+
+            function hideWinBanner() {
+                winBanner.classList.remove('show');
+                winBanner.textContent = '';
+            }
+
+            function cellToPixel(pos) {
+                const cell = cellRefs[pos.y * GRID_SIZE + pos.x];
+                if (!cell) return { left: 0, top: 0 };
+                return { left: cell.offsetLeft, top: cell.offsetTop };
+            }
+
+            function ensureAudioContext() {
+                if (!state.audioCtx) {
+                    const Ctx = window.AudioContext || window.webkitAudioContext;
+                    state.audioCtx = new Ctx();
+                }
+                if (state.audioCtx.state === 'suspended') {
+                    state.audioCtx.resume();
+                }
+                return state.audioCtx;
+            }
+
+            function startMusic() {
+                if (state.musicTimer) return;
+                const ctx = ensureAudioContext();
+                state.musicGain = ctx.createGain();
+                state.musicGain.gain.value = 0.18;
+                state.musicGain.connect(ctx.destination);
+                const pattern = [659.25, 783.99, 987.77, 783.99, 659.25, 523.25, 587.33];
+                let index = 0;
+                state.musicTimer = setInterval(() => {
+                    const freq = pattern[index % pattern.length];
+                    index++;
+                    const osc = ctx.createOscillator();
+                    osc.type = 'square';
+                    osc.frequency.value = freq;
+                    const gain = ctx.createGain();
+                    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(state.musicGain.gain.value, ctx.currentTime + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.2);
+                    osc.connect(gain).connect(state.musicGain);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.25);
+                }, 160);
+            }
+
+            function stopMusic() {
+                if (state.musicTimer) {
+                    clearInterval(state.musicTimer);
+                    state.musicTimer = null;
+                }
+                if (state.musicGain) {
+                    state.musicGain.disconnect();
+                    state.musicGain = null;
+                }
+            }
+
+            function playCaptureSound() {
+                const ctx = ensureAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                const base = 420 + Math.random() * 200;
+                osc.type = 'triangle';
+                osc.frequency.value = base;
+                gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.35);
+                osc.connect(gain).connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.4);
+            }
+        })();
+    </script>
+</body>
+</html>
+

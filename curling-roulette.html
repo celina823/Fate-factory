@@ -8,7 +8,11 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #000000;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, #222222 2px, #222222 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, #222222 2px, #222222 4px);
+            background-size: 20px 20px;
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -18,54 +22,77 @@
         .container {
             width: 100%;
             max-width: 1200px;
-            background: white;
-            border-radius: 20px;
+            background: #222222;
+            border-radius: 8px;
             padding: 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 0 4px #1DCD9F, 0 0 0 8px #169976, 0 8px 32px rgba(0, 0, 0, 0.8);
+            border: 2px solid #1DCD9F;
         }
-        h1 { text-align: center; color: #333; margin-bottom: 30px; font-size: 2.2em; }
+        h1 { text-align: center; color: #1DCD9F; margin-bottom: 30px; font-size: 2.2em; text-shadow: 2px 2px 0 #000000, 4px 4px 0 #169976; }
+
+        .shared-banner {
+            margin-bottom: 24px;
+            border-radius: 4px;
+            padding: 12px 20px;
+            background: #000000;
+            border: 2px solid #1DCD9F;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .shared-banner button {
+            border: none;
+            border-radius: 4px;
+            padding: 10px 18px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 2px solid #169976;
+        }
+        .shared-banner .primary {
+            background: #1DCD9F;
+            color: #000000;
+            box-shadow: 0 4px 0 #169976, 0 0 0 2px #000000;
+        }
+        .shared-banner .secondary {
+            background: #222222;
+            color: #1DCD9F;
+            border: 2px solid #1DCD9F;
+        }
 
         .curling-area {
             position: relative;
             width: 100%;
             height: 600px;
-            background:
-                radial-gradient(120% 100% at 50% 0%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%),
-                repeating-linear-gradient(90deg, rgba(255,255,255,0.35) 0 2px, rgba(255,255,255,0.25) 2px 6px),
-                linear-gradient(to bottom, #e8f4f8 0%, #c8e6f0 100%);
-            border-radius: 15px;
+            background: #000000;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 8px, #169976 8px, #169976 9px),
+                repeating-linear-gradient(90deg, transparent, transparent 8px, #169976 8px, #169976 9px);
+            background-size: 16px 16px;
+            border-radius: 4px;
             overflow: hidden;
-            border: 3px solid #4a90e2;
-            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.1);
+            border: 4px solid #1DCD9F;
+            box-shadow: inset 0 0 20px rgba(29, 205, 159, 0.3), 0 0 0 2px #169976;
         }
 
         .ice-surface { position: relative; width: 100%; height: 100%; overflow: hidden; }
         .track { position: absolute; inset: 0; }
 
-        .center-line {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            width: 2px;
-            height: 100%;
-            background: rgba(255, 0, 0, 0.35);
-            transform: translateX(-50%);
-            z-index: 60;
-            pointer-events: none;
-        }
 
         .curling-stone {
             position: absolute;
             width: 90px; height: 90px;
-            background: radial-gradient(circle at 30% 30%, #ffffff, #c0c0c0);
+            background: #222222;
             border-radius: 50%;
-            border: 5px solid #888;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35), inset 0 2px 6px rgba(255, 255, 255, 0.6);
+            border: 4px solid #1DCD9F;
+            box-shadow: 0 0 0 2px #169976, 0 8px 16px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(29, 205, 159, 0.2);
             z-index: 80;
-            left: 50%;
+            left: 15%;
             top: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
+            transition: left 0.95s cubic-bezier(0.15, 0.75, 0.35, 1.05);
+        }
+        .curling-stone.centered {
+            left: 50%;
         }
 
         .items-rail {
@@ -82,19 +109,42 @@
             pointer-events: none;
         }
         .lanes { position: relative; width: 100%; height: 100%; }
-        .moving-layer { position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-        .items-wrapper { display: flex; align-items: center; gap: 10px; will-change: transform; }
+        .moving-layer { position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; overflow: hidden; }
+        .items-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            will-change: transform;
+            padding: 0 220px;
+            position: relative;
+        }
+        .items-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -60px;
+            left: -20000px;
+            width: 40000px;
+            height: 260px;
+            border-radius: 4px;
+            background: #000000;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 8px, #169976 8px, #169976 9px),
+                repeating-linear-gradient(90deg, transparent, transparent 8px, #169976 8px, #169976 9px);
+            background-size: 16px 16px;
+            box-shadow: inset 0 0 20px rgba(29, 205, 159, 0.2);
+            z-index: -1;
+        }
 
         .food-item {
             width: 160px;
             padding: 18px 20px;
-            background: white;
-            border-radius: 18px;
-            border: 3px solid #e0e0e0;
+            background: #222222;
+            border-radius: 4px;
+            border: 3px solid #169976;
             font-size: 20px;
             font-weight: bold;
-            color: #333;
-            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.18);
+            color: #1DCD9F;
+            box-shadow: 0 4px 0 #000000, 0 0 0 2px #1DCD9F;
             height: 150px;
             display: flex;
             align-items: center;
@@ -103,10 +153,46 @@
             transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
         }
         .food-item.selected {
-            background: #ff6b6b; color: #fff; border-color: #ff5252;
+            background: #1DCD9F; color: #000000; border-color: #1DCD9F;
             transform: scale(1.1);
-            box-shadow: 0 14px 32px rgba(255, 107, 107, 0.6);
+            box-shadow: 0 0 0 4px #169976, 0 8px 16px rgba(29, 205, 159, 0.6);
             z-index: 70;
+        }
+        .broom {
+            position: absolute;
+            left: 58%;
+            top: 48%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            z-index: 85;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            width: 8px;
+            height: 120px;
+            background: linear-gradient(to bottom, #8B4513 0%, #654321 50%, #8B4513 100%);
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            transform-origin: center bottom;
+        }
+        .broom::before {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-90deg);
+            width: 40px;
+            height: 20px;
+            background: linear-gradient(to bottom, #D2691E 0%, #CD853F 100%);
+            border-radius: 0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+        .broom.active {
+            opacity: 1;
+            animation: broomSweep 0.3s ease-in-out infinite;
+        }
+        @keyframes broomSweep {
+            0%, 100% { transform: translate(-50%, -50%) rotate(-15deg) translateX(-15px); }
+            50% { transform: translate(-50%, -50%) rotate(-15deg) translateX(15px); }
         }
 
         .controls { text-align: center; margin-top: 30px; display: flex; gap: 12px; justify-content: center; align-items: center; }
@@ -123,7 +209,7 @@
         .restart-btn:hover { transform: translateY(-2px); box-shadow: 0 7px 20px rgba(120,120,120,0.5); }
 
         .result {
-            text-align: center; margin-top: 20px; font-size: 24px; font-weight: bold; color: #ff6b6b;
+            text-align: center; margin-top: 20px; font-size: 24px; font-weight: bold; color: #1DCD9F; text-shadow: 2px 2px 0 #000000, 4px 4px 0 #169976;
             min-height: 40px; opacity: 0; transition: opacity 0.5s ease;
         }
         .result.show { opacity: 1; }
@@ -133,16 +219,20 @@
     <div class="container">
         <h1>🍽️ 컬링 룰렛 - 음식 선택</h1>
 
+        <div class="shared-banner">
+            <button class="primary" id="goHubBtn" type="button">카테고리로 돌아가기</button>
+        </div>
+
         <div class="curling-area">
            <div class="ice-surface" id="ice">
                <div class="track">
-                   <div class="center-line" id="centerLine"></div>
                    <div class="lanes">
                        <div class="moving-layer" style="top:20%">
                            <div class="items-wrapper" id="itemsWrapper"></div>
                        </div>
                    </div>
                    <div class="curling-stone" id="curlingStone"></div>
+                   <div class="broom" id="broom"></div>
                </div>
            </div>
         </div>
@@ -155,21 +245,30 @@
     </div>
 
     <script>
-        const foods = [
+        const MIN_ITEMS = 3;
+        const ZUSTAND_STORAGE_KEY = 'roulette-items';
+        const DEFAULT_ITEMS = [
             '🍕 피자', '🍔 햄버거', '🍜 라면', '🍱 도시락', '🍣 초밥',
             '🍖 고기', '🍗 치킨', '🍝 파스타', '🥘 찜닭', '🍲 부대찌개',
             '🍛 카레', '🥗 샐러드', '🍤 탕수육', '🥟 만두', '🍙 김밥',
             '🌮 타코', '🍳 오므라이스', '🥪 샌드위치', '🍞 빵', '🍰 케이크'
         ];
+        let foods = [...DEFAULT_ITEMS];
+
         const itemsWrapper = document.getElementById('itemsWrapper');
         const throwBtn = document.getElementById('throwBtn');
         const restartBtn = document.getElementById('restartBtn');
         const result = document.getElementById('result');
+        const broom = document.getElementById('broom');
+        const curlingStone = document.getElementById('curlingStone');
+        const goHubBtn = document.getElementById('goHubBtn');
 
         const CYCLES = 100;
         const ITEM_WIDTH = 160;
         const GAP = 10;
         const ITEM_SPAN = ITEM_WIDTH + GAP;
+        const STOP_THRESHOLD = 15;
+        const FRICTION = 0.992;
 
         function createOneCycle() {
             const frag = document.createDocumentFragment();
@@ -199,19 +298,164 @@
             const ctx = ensureAudio(); const freqs = [523.25, 659.25, 783.99];
             freqs.forEach((f, i) => { const o = ctx.createOscillator(); const g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.05); g.gain.value = 0.0; o.connect(g).connect(ctx.destination); const t0 = ctx.currentTime + i * 0.05; g.gain.linearRampToValueAtTime(0.22, t0 + 0.03); g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.4); o.start(t0); o.stop(t0 + 0.45); });
         }
+        function playBroomSound(durationMs = 1200) {
+            const ctx = ensureAudio();
+            const duration = Math.max(0.2, durationMs / 1000);
+            const len = Math.floor(ctx.sampleRate * duration);
+            const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < len; i++) {
+                const fade = 1 - i / len;
+                const wobble = Math.sin(i / 25) * 0.2;
+                data[i] = (Math.random() * 2 - 1 + wobble) * fade * 0.7;
+            }
+            const src = ctx.createBufferSource();
+            src.buffer = buffer;
+            const sweep = ctx.createBiquadFilter();
+            sweep.type = 'bandpass';
+            sweep.frequency.setValueAtTime(900, ctx.currentTime);
+            sweep.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + duration);
+            sweep.Q.value = 1.2;
+            const gain = ctx.createGain();
+            const now = ctx.currentTime;
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.24, now + 0.04);
+            gain.gain.exponentialRampToValueAtTime(0.004, now + duration);
+            src.connect(sweep).connect(gain).connect(ctx.destination);
+            src.start(now);
+            src.stop(now + duration + 0.1);
+        }
 
         function showRestart(show) { restartBtn.style.display = show ? 'inline-block' : 'none'; }
-        function reset() { cancelAnimationFrame(animId); isThrowing = false; hasSelected = false; throwBtn.disabled = false; showRestart(false); result.classList.remove('show'); result.textContent = ''; positionX = 0; velocity = 0; lastTickIndex = -1; itemsWrapper.style.transform = `translateX(0px)`; itemsWrapper.querySelectorAll('.food-item').forEach(el => el.classList.remove('selected')); }
+
+        const sanitizeItems = list => list.map(item => item.trim()).filter(Boolean);
+
+        function loadSharedItems(minRequired = MIN_ITEMS) {
+            try {
+                const raw = localStorage.getItem(ZUSTAND_STORAGE_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                // Zustand persist 형식: { state: { items: [...] } } 또는 직접 { items: [...] }
+                let items = null;
+                if (parsed.state && Array.isArray(parsed.state.items)) {
+                    items = parsed.state.items;
+                } else if (Array.isArray(parsed.items)) {
+                    items = parsed.items;
+                }
+                if (!items) return null;
+                const clean = sanitizeItems(items);
+                return clean.length >= minRequired ? clean : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function applyItemSet(list, lockInput) {
+            foods = list.slice();
+            reset();
+        }
+
+        function bootstrapSharedItems() {
+            const shared = loadSharedItems(MIN_ITEMS);
+            if (shared) {
+                throwBtn.disabled = false;
+                applyItemSet(shared, true);
+            } else {
+                throwBtn.disabled = true;
+                alert('카테고리 페이지에서 항목을 등록한 뒤 다시 실행해 주세요.');
+            }
+        }
+        
+        if (goHubBtn) {
+            goHubBtn.addEventListener('click', () => {
+                window.location.href = '/';
+            });
+        }
+
+        function reset() {
+            cancelAnimationFrame(animId);
+            isThrowing = false;
+            hasSelected = false;
+            throwBtn.disabled = foods.length < MIN_ITEMS;
+            showRestart(false);
+            result.classList.remove('show');
+            result.textContent = '';
+            positionX = 0;
+            velocity = 0;
+            lastTickIndex = -1;
+            isBroomActive = false;
+            broomEndTime = 0;
+            broomPlan = [];
+            nextBroomIndex = 0;
+            initialVelocity = 0;
+            broom.classList.remove('active');
+            curlingStone.classList.remove('centered');
+            itemsWrapper.style.transform = `translateX(0px)`;
+            itemsWrapper.innerHTML = '';
+            for (let i = 0; i < CYCLES; i++) createOneCycle();
+            itemsWrapper.querySelectorAll('.food-item').forEach(el => el.classList.remove('selected'));
+        }
 
         let lastTickIndex = -1;
+        let isBroomActive = false;
+        let broomEndTime = 0;
+        let broomPlan = [];
+        let nextBroomIndex = 0;
+        let initialVelocity = 0;
+        function planBrooms() {
+            const count = Math.floor(Math.random() * 5) + 1; // 1~5회
+            broomPlan = Array.from({ length: count }, () => ({
+                progress: Math.random() * 0.75 + 0.15, // 0.15 ~ 0.9 구간
+                duration: Math.random() * 2000 + 1000 // 1~3초 (ms)
+            })).sort((a, b) => a.progress - b.progress);
+            nextBroomIndex = 0;
+        }
+
+        function startBroom(ts, durationMs) {
+            isBroomActive = true;
+            broom.classList.add('active');
+            broomEndTime = ts + durationMs;
+            playBroomSound(durationMs);
+        }
+
         function startThrow() {
             if (isThrowing || hasSelected) return; isThrowing = true; throwBtn.disabled = true;
-            const minV = 2000, maxV = 4000; velocity = Math.random() * (maxV - minV) + minV; const friction = 0.992; const stopThreshold = 10;
+            // 컬링 스톤을 가운데로 이동
+            curlingStone.classList.add('centered');
+            planBrooms();
+            
+            const minV = 1600, maxV = 3200;
+            velocity = Math.random() * (maxV - minV) + minV;
+            initialVelocity = velocity;
+            const velocityRange = Math.max(initialVelocity - STOP_THRESHOLD, 1);
             let lastTs = performance.now();
             const animate = (ts) => {
                 const dt = (ts - lastTs) / 1000; lastTs = ts; positionX += velocity * dt; const tx = `translateX(${-positionX}px)`; itemsWrapper.style.transform = tx;
                 const tickIndex = Math.floor(positionX / ITEM_SPAN); if (tickIndex > lastTickIndex) { playClick(); lastTickIndex = tickIndex; }
-                velocity *= friction; if (velocity < stopThreshold) { cancelAnimationFrame(animId); finalizeSelection(); return; }
+                const progress = Math.min(0.999, Math.max(0, 1 - (velocity - STOP_THRESHOLD) / velocityRange));
+                if (!isBroomActive && nextBroomIndex < broomPlan.length && progress >= broomPlan[nextBroomIndex].progress) {
+                    const plan = broomPlan[nextBroomIndex++];
+                    startBroom(ts, plan.duration);
+                }
+                
+                // 빗자루 효과가 활성화되어 있고 시간이 남아있으면 속도 유지
+                if (isBroomActive && ts < broomEndTime) {
+                    // 속도 유지 (friction 적용 안 함)
+                } else {
+                    // 빗자루 효과 종료
+                    if (isBroomActive) {
+                        isBroomActive = false;
+                        broom.classList.remove('active');
+                    }
+                    velocity *= FRICTION;
+                }
+                
+                if (velocity < STOP_THRESHOLD) {
+                    broom.classList.remove('active');
+                    cancelAnimationFrame(animId); 
+                    finalizeSelection(); 
+                    return; 
+                }
                 animId = requestAnimationFrame(animate);
             }; animId = requestAnimationFrame(animate);
         }
@@ -223,7 +467,7 @@
             playWin(); hasSelected = true; showRestart(true);
         }
 
-        throwBtn.addEventListener('click', startThrow); restartBtn.addEventListener('click', reset); reset();
+        throwBtn.addEventListener('click', startThrow); restartBtn.addEventListener('click', reset); bootstrapSharedItems();
     </script>
 </body>
 </html>

@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우주선 룰렛</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #000000;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, #222222 2px, #222222 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, #222222 2px, #222222 4px);
+            background-size: 20px 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background: #222222;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 0 0 4px #1DCD9F, 0 0 0 8px #169976, 0 8px 32px rgba(0, 0, 0, 0.8);
+            border: 2px solid #1DCD9F;
+        }
+        h1 { text-align: center; color: #1DCD9F; margin-bottom: 30px; font-size: 2.2em; text-shadow: 2px 2px 0 #000000, 4px 4px 0 #169976; }
+
+        .shared-banner {
+            margin-bottom: 24px;
+            border-radius: 4px;
+            padding: 12px 20px;
+            background: #000000;
+            border: 2px solid #1DCD9F;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .shared-banner button {
+            border: none;
+            border-radius: 4px;
+            padding: 10px 18px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 2px solid #169976;
+        }
+        .shared-banner .primary {
+            background: #1DCD9F;
+            color: #000000;
+            box-shadow: 0 4px 0 #169976, 0 0 0 2px #000000;
+        }
+
+        .space-area {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            background: #000000;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 4px solid #1DCD9F;
+            box-shadow: inset 0 0 20px rgba(29, 205, 159, 0.3), 0 0 0 2px #169976;
+        }
+
+        .space-surface { 
+            position: relative; 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+        }
+
+        /* 3D 배경 레이어들 */
+        .bg-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+        .bg-layer-1 {
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(22, 153, 118, 0.3) 40px, rgba(22, 153, 118, 0.3) 41px),
+                repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(22, 153, 118, 0.3) 40px, rgba(22, 153, 118, 0.3) 41px);
+            background-size: 80px 80px;
+            opacity: 0.4;
+            animation: bgMove1 20s linear infinite;
+        }
+        .bg-layer-2 {
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(29, 205, 159, 0.2) 60px, rgba(29, 205, 159, 0.2) 61px),
+                repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(29, 205, 159, 0.2) 60px, rgba(29, 205, 159, 0.2) 61px);
+            background-size: 120px 120px;
+            opacity: 0.3;
+            animation: bgMove2 30s linear infinite;
+        }
+        .bg-layer-3 {
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 100px, rgba(22, 153, 118, 0.15) 100px, rgba(22, 153, 118, 0.15) 101px),
+                repeating-linear-gradient(90deg, transparent, transparent 100px, rgba(22, 153, 118, 0.15) 100px, rgba(22, 153, 118, 0.15) 101px);
+            background-size: 200px 200px;
+            opacity: 0.2;
+            animation: bgMove3 50s linear infinite;
+        }
+        @keyframes bgMove1 {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(80px, 80px); }
+        }
+        @keyframes bgMove2 {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(120px, 120px); }
+        }
+        @keyframes bgMove3 {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(200px, 200px); }
+        }
+
+        .track { position: absolute; inset: 0; }
+
+        .spaceship {
+            position: absolute;
+            width: 60px;
+            height: 40px;
+            left: 15%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 80;
+            pointer-events: none;
+            transition: left 0.1s linear;
+        }
+        .spaceship::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 30px solid #1DCD9F;
+            border-top: 15px solid transparent;
+            border-bottom: 15px solid transparent;
+            filter: drop-shadow(0 0 8px rgba(29, 205, 159, 0.8));
+        }
+        .spaceship::after {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 12px;
+            background: #169976;
+            border-radius: 0 50% 50% 0;
+            box-shadow: 0 0 12px rgba(29, 205, 159, 0.6);
+        }
+        .spaceship.centered {
+            left: 50%;
+        }
+
+        .items-rail {
+            position: absolute;
+            left: 0;
+            top: 20%;
+            height: 200px;
+            transform: translateY(-50%);
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            pointer-events: none;
+        }
+        .lanes { position: relative; width: 100%; height: 100%; }
+        .moving-layer { position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; overflow: hidden; }
+        .items-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            will-change: transform;
+            padding: 0 220px;
+            position: relative;
+        }
+        .items-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -60px;
+            left: -20000px;
+            width: 40000px;
+            height: 260px;
+            border-radius: 4px;
+            background: #000000;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(22, 153, 118, 0.2) 40px, rgba(22, 153, 118, 0.2) 41px),
+                repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(22, 153, 118, 0.2) 40px, rgba(22, 153, 118, 0.2) 41px);
+            background-size: 80px 80px;
+            box-shadow: inset 0 0 20px rgba(29, 205, 159, 0.2);
+            z-index: -1;
+        }
+
+        .item {
+            width: 160px;
+            padding: 18px 20px;
+            background: #222222;
+            border-radius: 4px;
+            border: 3px solid #169976;
+            font-size: 20px;
+            font-weight: bold;
+            color: #1DCD9F;
+            box-shadow: 0 4px 0 #000000, 0 0 0 2px #1DCD9F;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+        .item.selected {
+            background: #1DCD9F; 
+            color: #000000; 
+            border-color: #1DCD9F;
+            transform: scale(1.1);
+            box-shadow: 0 0 0 4px #169976, 0 8px 16px rgba(29, 205, 159, 0.6);
+            z-index: 70;
+        }
+
+        .asteroid {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #222222;
+            border: 2px solid #169976;
+            border-radius: 50%;
+            z-index: 60;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 0 10px rgba(22, 153, 118, 0.5);
+        }
+        .asteroid.active {
+            opacity: 1;
+        }
+        .asteroid::before {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #1DCD9F;
+            border-radius: 50%;
+            top: 20%;
+            left: 30%;
+            box-shadow: 12px 15px 0 -2px #1DCD9F, 25px 8px 0 -2px #1DCD9F, 15px 25px 0 -2px #1DCD9F;
+        }
+
+        .controls { text-align: center; margin-top: 30px; display: flex; gap: 12px; justify-content: center; align-items: center; }
+        .btn {
+            padding: 15px 40px; font-size: 18px; font-weight: bold; color: white;
+            border: none; border-radius: 50px; cursor: pointer; transition: all 0.3s ease;
+        }
+        .launch-btn { 
+            background: #1DCD9F; 
+            color: #000000; 
+            border: 2px solid #169976; 
+            box-shadow: 0 4px 0 #169976, 0 0 0 2px #000000; 
+        }
+        .launch-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #169976, 0 0 0 2px #000000; }
+        .launch-btn:active { transform: translateY(0); }
+        .launch-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .restart-btn { 
+            background: #222222; 
+            color: #1DCD9F; 
+            border: 2px solid #1DCD9F; 
+            box-shadow: 0 4px 0 #000000; 
+            display: none; 
+        }
+        .restart-btn:hover { transform: translateY(-2px); }
+
+        .result {
+            text-align: center; 
+            margin-top: 20px; 
+            font-size: 24px; 
+            font-weight: bold; 
+            color: #1DCD9F; 
+            text-shadow: 2px 2px 0 #000000, 4px 4px 0 #169976;
+            min-height: 40px; 
+            opacity: 0; 
+            transition: opacity 0.5s ease;
+        }
+        .result.show { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 우주선 룰렛</h1>
+
+        <div class="shared-banner">
+            <button class="primary" id="goHubBtn" type="button">카테고리로 돌아가기</button>
+        </div>
+
+        <div class="space-area">
+            <div class="space-surface" id="space">
+                <div class="bg-layer bg-layer-1"></div>
+                <div class="bg-layer bg-layer-2"></div>
+                <div class="bg-layer bg-layer-3"></div>
+                <div class="track">
+                    <div class="lanes">
+                        <div class="moving-layer" style="top:20%">
+                            <div class="items-wrapper" id="itemsWrapper"></div>
+                        </div>
+                    </div>
+                    <div class="spaceship" id="spaceship"></div>
+                    <div id="asteroidsContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn launch-btn" id="launchBtn">우주선 발사</button>
+            <button class="btn restart-btn" id="restartBtn">다시하기</button>
+        </div>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        const MIN_ITEMS = 3;
+        const ZUSTAND_STORAGE_KEY = 'roulette-items';
+        const DEFAULT_ITEMS = [
+            '🍕 피자', '🍔 햄버거', '🍜 라면', '🍱 도시락', '🍣 초밥',
+            '🍖 고기', '🍗 치킨', '🍝 파스타', '🥘 찜닭', '🍲 부대찌개',
+            '🍛 카레', '🥗 샐러드', '🍤 탕수육', '🥟 만두', '🍙 김밥',
+            '🌮 타코', '🍳 오므라이스', '🥪 샌드위치', '🍞 빵', '🍰 케이크'
+        ];
+        let items = [...DEFAULT_ITEMS];
+
+        const itemsWrapper = document.getElementById('itemsWrapper');
+        const launchBtn = document.getElementById('launchBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const result = document.getElementById('result');
+        const spaceship = document.getElementById('spaceship');
+        const asteroidsContainer = document.getElementById('asteroidsContainer');
+        const goHubBtn = document.getElementById('goHubBtn');
+
+        const CYCLES = 100;
+        const ITEM_WIDTH = 160;
+        const GAP = 10;
+        const ITEM_SPAN = ITEM_WIDTH + GAP;
+        const STOP_THRESHOLD = 5;
+        const ACCELERATION_TIME = 3000; // 3초 가속
+        const ACCELERATION_FACTOR = 1.15; // 가속 배율
+        const ASTEROID_SLOWDOWN = 0.85; // 운석 충돌 시 속도 감소
+        const MIN_ASTEROIDS = 3;
+        const ASTEROIDS_PER_30_ITEMS = 1;
+
+        let positionX = 0;
+        let velocity = 0;
+        let animId = null;
+        let isLaunching = false;
+        let hasSelected = false;
+        let audioCtx = null;
+        let accelerationStartTime = 0;
+        let asteroids = [];
+        let asteroidPositions = [];
+
+        function ensureAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            return audioCtx;
+        }
+
+        function playClick() {
+            const ctx = ensureAudio();
+            const len = Math.floor(0.015 * ctx.sampleRate);
+            const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+            const data = buf.getChannelData(0);
+            for (let i = 0; i < len; i++) {
+                data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (len / 5));
+            }
+            const src = ctx.createBufferSource();
+            src.buffer = buf;
+            const hp = ctx.createBiquadFilter();
+            hp.type = 'highpass';
+            hp.frequency.value = 1600;
+            hp.Q.value = 0.8;
+            const g = ctx.createGain();
+            g.gain.value = 0.18;
+            src.connect(hp).connect(g).connect(ctx.destination);
+            src.start();
+        }
+
+        function playWin() {
+            const ctx = ensureAudio();
+            const freqs = [523.25, 659.25, 783.99];
+            freqs.forEach((f, i) => {
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.type = 'sine';
+                o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.05);
+                g.gain.value = 0.0;
+                o.connect(g).connect(ctx.destination);
+                const t0 = ctx.currentTime + i * 0.05;
+                g.gain.linearRampToValueAtTime(0.22, t0 + 0.03);
+                g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.4);
+                o.start(t0);
+                o.stop(t0 + 0.45);
+            });
+        }
+
+        function playAsteroidHit() {
+            const ctx = ensureAudio();
+            const len = Math.floor(0.1 * ctx.sampleRate);
+            const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+            const data = buf.getChannelData(0);
+            for (let i = 0; i < len; i++) {
+                const fade = 1 - i / len;
+                data[i] = (Math.random() * 2 - 1) * fade * 0.3;
+            }
+            const src = ctx.createBufferSource();
+            src.buffer = buf;
+            const lp = ctx.createBiquadFilter();
+            lp.type = 'lowpass';
+            lp.frequency.value = 800;
+            const g = ctx.createGain();
+            g.gain.value = 0.15;
+            src.connect(lp).connect(g).connect(ctx.destination);
+            src.start();
+        }
+
+        function createOneCycle() {
+            const frag = document.createDocumentFragment();
+            items.forEach((item) => {
+                const el = document.createElement('div');
+                el.className = 'item';
+                el.textContent = item;
+                frag.appendChild(el);
+            });
+            itemsWrapper.appendChild(frag);
+        }
+
+        function calculateAsteroidCount() {
+            const count = Math.max(
+                MIN_ASTEROIDS,
+                Math.floor(items.length / 30) * ASTEROIDS_PER_30_ITEMS
+            );
+            return count;
+        }
+
+        function createAsteroids() {
+            asteroidsContainer.innerHTML = '';
+            asteroids = [];
+            asteroidPositions = [];
+            const count = calculateAsteroidCount();
+            const totalSpan = items.length * ITEM_SPAN;
+            
+            for (let i = 0; i < count; i++) {
+                const asteroid = document.createElement('div');
+                asteroid.className = 'asteroid';
+                asteroidsContainer.appendChild(asteroid);
+                
+                // 랜덤 위치 (전체 경로에 분산)
+                const position = Math.random() * totalSpan * 0.8 + totalSpan * 0.1;
+                asteroidPositions.push(position);
+                asteroid.style.left = `${(position % (ITEM_SPAN * items.length)) / (ITEM_SPAN * items.length) * 100}%`;
+                asteroid.style.top = `${20 + Math.random() * 60}%`;
+            }
+        }
+
+        function showRestart(show) {
+            restartBtn.style.display = show ? 'inline-block' : 'none';
+        }
+
+        const sanitizeItems = list => list.map(item => item.trim()).filter(Boolean);
+
+        function loadSharedItems(minRequired = MIN_ITEMS) {
+            try {
+                const raw = localStorage.getItem(ZUSTAND_STORAGE_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                let items = null;
+                if (parsed.state && Array.isArray(parsed.state.items)) {
+                    items = parsed.state.items;
+                } else if (Array.isArray(parsed.items)) {
+                    items = parsed.items;
+                }
+                if (!items) return null;
+                const clean = sanitizeItems(items);
+                return clean.length >= minRequired ? clean : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function applyItemSet(list) {
+            items = list.slice();
+            reset();
+        }
+
+        function bootstrapSharedItems() {
+            const shared = loadSharedItems(MIN_ITEMS);
+            if (shared) {
+                launchBtn.disabled = false;
+                applyItemSet(shared);
+            } else {
+                launchBtn.disabled = true;
+                alert('카테고리 페이지에서 항목을 등록한 뒤 다시 실행해 주세요.');
+            }
+        }
+
+        if (goHubBtn) {
+            goHubBtn.addEventListener('click', () => {
+                window.location.href = '/';
+            });
+        }
+
+        function reset() {
+            cancelAnimationFrame(animId);
+            isLaunching = false;
+            hasSelected = false;
+            launchBtn.disabled = items.length < MIN_ITEMS;
+            showRestart(false);
+            result.classList.remove('show');
+            result.textContent = '';
+            positionX = 0;
+            velocity = 0;
+            accelerationStartTime = 0;
+            asteroids = [];
+            asteroidPositions = [];
+            spaceship.classList.remove('centered');
+            itemsWrapper.style.transform = `translateX(0px)`;
+            itemsWrapper.innerHTML = '';
+            for (let i = 0; i < CYCLES; i++) createOneCycle();
+            itemsWrapper.querySelectorAll('.item').forEach(el => el.classList.remove('selected'));
+            createAsteroids();
+        }
+
+        function checkAsteroidCollision(currentPos) {
+            for (let i = 0; i < asteroidPositions.length; i++) {
+                const asteroidPos = asteroidPositions[i];
+                const distance = Math.abs(currentPos - asteroidPos);
+                if (distance < ITEM_SPAN * 2) {
+                    const asteroid = asteroidsContainer.children[i];
+                    if (asteroid && !asteroid.classList.contains('active')) {
+                        asteroid.classList.add('active');
+                        playAsteroidHit();
+                        velocity *= ASTEROID_SLOWDOWN;
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function launch() {
+            if (isLaunching || hasSelected) return;
+            isLaunching = true;
+            launchBtn.disabled = true;
+            spaceship.classList.add('centered');
+            
+            const minV = 800;
+            const maxV = 1200;
+            velocity = Math.random() * (maxV - minV) + minV;
+            accelerationStartTime = performance.now();
+            
+            let lastTs = performance.now();
+            let lastTickIndex = -1;
+            
+            const animate = (ts) => {
+                const dt = (ts - lastTs) / 1000;
+                lastTs = ts;
+                
+                // 가속 단계 (3초)
+                const elapsed = ts - accelerationStartTime;
+                if (elapsed < ACCELERATION_TIME) {
+                    // 가속 중
+                    velocity *= Math.pow(ACCELERATION_FACTOR, dt);
+                }
+                // 이후 등속운동
+                
+                // 운석 충돌 체크
+                checkAsteroidCollision(positionX);
+                
+                // 위치 업데이트
+                positionX += velocity * dt;
+                const tx = `translateX(${-positionX}px)`;
+                itemsWrapper.style.transform = tx;
+                
+                // 사운드 효과
+                const tickIndex = Math.floor(positionX / ITEM_SPAN);
+                if (tickIndex > lastTickIndex) {
+                    playClick();
+                    lastTickIndex = tickIndex;
+                }
+                
+                // 속도가 매우 낮으면 점점 느려지며 멈춤
+                if (velocity < STOP_THRESHOLD * 2) {
+                    velocity *= 0.95; // 점점 느려짐
+                }
+                
+                if (velocity < STOP_THRESHOLD) {
+                    cancelAnimationFrame(animId);
+                    finalizeSelection();
+                    return;
+                }
+                
+                animId = requestAnimationFrame(animate);
+            };
+            
+            animId = requestAnimationFrame(animate);
+        }
+
+        function finalizeSelection() {
+            const centerX = window.innerWidth / 2;
+            let closest = null;
+            let minDist = Infinity;
+            
+            itemsWrapper.querySelectorAll('.item').forEach(el => {
+                const r = el.getBoundingClientRect();
+                const c = r.left + r.width / 2;
+                const d = Math.abs(c - centerX);
+                if (d < minDist) {
+                    minDist = d;
+                    closest = el;
+                }
+            });
+            
+            if (closest) {
+                closest.classList.add('selected');
+                result.textContent = `선택된 항목: ${closest.textContent}`;
+                result.classList.add('show');
+            }
+            
+            playWin();
+            hasSelected = true;
+            showRestart(true);
+        }
+
+        launchBtn.addEventListener('click', launch);
+        restartBtn.addEventListener('click', reset);
+        bootstrapSharedItems();
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
