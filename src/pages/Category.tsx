@@ -1,11 +1,14 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Category.css";
 import LogoImg from "../assets/ff-logo-img.png";
 import { useRouletteItemsStore } from "../stores/useRouletteItemsStore";
 
 export default function Category() {
+  const [mode, setMode] = useState("원형 룰렛");
   const [input, setInput] = useState("");
-  const { items, addItem, addPresets, clearItems } = useRouletteItemsStore();
+  const { items, addItem, addPresets, clearItems, removeItem } =
+    useRouletteItemsStore();
 
   const handleCategoryClick = (label: string) => {
     const preset = categoryPresets[label];
@@ -33,6 +36,8 @@ export default function Category() {
     }
   };
 
+  const navigate = useNavigate();
+
   return (
     <div className="ff-page">
       <img src={LogoImg} alt="Fate Factory Logo" className="ff-logo-img" />
@@ -40,18 +45,68 @@ export default function Category() {
         {/* 모드 탭 */}
         <h2>룰렛 모드</h2>
         <nav className="ff-mode-tabs">
-          <button className="ff-mode-btn ff-mode-btn--active">원형 룰렛</button>
-          <button className="ff-mode-btn">텍스트 아레나</button>
-          <button className="ff-mode-btn">컬링</button>
-          <button className="ff-mode-btn">팩맨</button>
-          <button className="ff-mode-btn">사다리타기</button>
+          <button
+            className={`ff-mode-btn ${
+              mode === "원형 룰렛" ? "ff-mode-btn--active" : ""
+            }`}
+            onClick={() => setMode("원형 룰렛")}
+          >
+            원형 룰렛
+          </button>
+          <button
+            className={`ff-mode-btn ${
+              mode === "텍스트 아레나" ? "ff-mode-btn--active" : ""
+            }`}
+            onClick={() => setMode("텍스트 아레나")}
+          >
+            텍스트 아레나
+          </button>
+          <button
+            className={`ff-mode-btn ${
+              mode === "컬링" ? "ff-mode-btn--active" : ""
+            }`}
+            onClick={() => setMode("컬링")}
+          >
+            컬링
+          </button>
+          <button
+            className={`ff-mode-btn ${
+              mode === "팩맨" ? "ff-mode-btn--active" : ""
+            }`}
+            onClick={() => setMode("팩맨")}
+          >
+            팩맨
+          </button>
+          <button
+            className={`ff-mode-btn ${
+              mode === "가라폰" ? "ff-mode-btn--active" : ""
+            }`}
+            onClick={() => setMode("가라폰")}
+          >
+            가라폰
+          </button>
+          <button
+            className={`ff-mode-btn ${
+              mode === "사다리타기" ? "ff-mode-btn--active" : ""
+            }`}
+            onClick={() => setMode("사다리타기")}
+          >
+            사다리타기
+          </button>
         </nav>
 
         {/* 메인 영역 */}
         <main className="ff-main">
           {/* 왼쪽: 항목 편집 */}
           <section className="ff-left">
-            <h2 className="ff-left-title">항목 편집</h2>
+            <div className="ff-left-header">
+              <h2 className="ff-left-title">항목 편집</h2>
+              {items.length > 0 && (
+                <button className="ff-clear-btn" onClick={clearItems}>
+                  전체 삭제
+                </button>
+              )}
+            </div>
             <div className="ff-input-row">
               <input
                 className="ff-input"
@@ -70,7 +125,13 @@ export default function Category() {
               )}
               {items.map((item, idx) => (
                 <li key={idx} className="ff-item">
-                  {item}
+                  <span className="ff-item-text">{item}</span>
+                  <button
+                    className="ff-item-delete-btn"
+                    onClick={() => removeItem(idx)}
+                  >
+                    삭제
+                  </button>
                 </li>
               ))}
             </ul>
@@ -109,7 +170,26 @@ export default function Category() {
                 ))}
               </div>
             </div>
-            <button className="ff-start-btn">내가 고른 룰렛 시작!</button>
+            <button
+              className="ff-start-btn"
+              onClick={() => {
+                const url = modeToUrl[mode];
+                // 1) URL이 존재하지 않음
+                if (!url) {
+                  alert("아직 준비 중인 모드입니다!");
+                  return;
+                }
+
+                // 2) 항목이 비어 있음 → 룰렛 돌릴 내용 없음
+                if (items.length === 0) {
+                  alert("항목을 먼저 추가해주세요!");
+                  return;
+                }
+                navigate(url);
+              }}
+            >
+              내가 고른 룰렛 시작!
+            </button>
           </section>
         </main>
       </div>
@@ -201,4 +281,14 @@ const categoryPresets: Record<string, string[]> = {
   "기분 뭐하지": ["여유로움", "활기참", "즐거움", "편안함", "신남"],
 
   "뭐 고르지": [],
+};
+
+// 모드→url매핑
+const modeToUrl: Record<string, string> = {
+  "원형 룰렛": "/roulette",
+  "텍스트 아레나": "/text-arena",
+  컬링: "/curling",
+  팩맨: "/pacman",
+  가라폰: "/gashapon",
+  사다리타기: "/ladder",
 };
