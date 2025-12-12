@@ -9,15 +9,19 @@
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap');
 
         :root {
-            --bg-color: #0f172a;
-            --accent-color: #38bdf8;
-            --text-color: #e2e8f0;
+            --bg-color: #000000;
+            --accent-color: #1DCD9F;
+            --text-color: #1DCD9F;
         }
 
         body {
             margin: 0;
             overflow: hidden;
             background-color: var(--bg-color);
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, #222222 2px, #222222 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, #222222 2px, #222222 4px);
+            background-size: 20px 20px;
             font-family: 'Outfit', sans-serif;
             color: var(--text-color);
         }
@@ -49,24 +53,25 @@
         }
 
         .character-card {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 6px;
+            background: #222222;
+            border: 2px solid #169976;
+            border-radius: 4px;
             padding: 8px 10px;
             margin-bottom: 4px;
             transition: all 0.3s;
         }
 
         .character-card.alive {
-            border-left: 3px solid #22c55e;
-            background: rgba(15, 23, 42, 0.9);
+            border-left: 4px solid #1DCD9F;
+            background: #000000;
+            border-color: #1DCD9F;
         }
 
         .character-card.dead {
             opacity: 0.4;
-            border-left: 3px solid #ef4444;
-            background: rgba(15, 23, 42, 0.5);
+            border-left: 4px solid #169976;
+            background: #000000;
+            border-color: #169976;
             text-decoration: line-through;
         }
 
@@ -95,21 +100,22 @@
         }
 
         .character-card.dead .character-name {
-            color: rgba(226, 232, 240, 0.4);
+            color: #169976;
         }
 
         .character-hp {
             font-size: 0.8rem;
-            color: rgba(226, 232, 240, 0.9);
+            color: #1DCD9F;
         }
 
         .character-card.dead .character-hp {
-            color: rgba(226, 232, 240, 0.3);
+            color: #169976;
         }
 
         .stat-bar {
             height: 4px;
-            background: rgba(255, 255, 255, 0.1);
+            background: #000000;
+            border: 1px solid #169976;
             border-radius: 2px;
             margin-top: 4px;
             overflow: hidden;
@@ -121,20 +127,20 @@
         }
 
         .hp-bar {
-            background: #22c55e;
+            background: #1DCD9F;
         }
 
         .hp-bar.medium {
-            background: #f59e0b;
+            background: #169976;
         }
 
         .hp-bar.low {
-            background: #ef4444;
+            background: #169976;
         }
 
         .stat-bar {
             height: 4px;
-            background: rgba(255, 255, 255, 0.1);
+            background: #000000;
             border-radius: 2px;
             margin-top: 4px;
             overflow: hidden;
@@ -146,11 +152,11 @@
         }
 
         .hp-bar {
-            background: #22c55e;
+            background: #1DCD9F;
         }
 
         .hp-bar.low {
-            background: #ef4444;
+            background: #169976;
         }
 
         #character-panel::-webkit-scrollbar {
@@ -158,12 +164,12 @@
         }
 
         #character-panel::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
+            background: #000000;
             border-radius: 3px;
         }
 
         #character-panel::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
+            background: #1DCD9F;
             border-radius: 3px;
         }
 
@@ -173,10 +179,10 @@
             right: 310px;
             width: 200px;
             height: 200px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 8px;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
+            border: 3px solid #1DCD9F;
+            border-radius: 4px;
+            background: #000000;
+            box-shadow: 0 0 0 2px #169976;
             pointer-events: none;
         }
 
@@ -187,13 +193,11 @@
         }
 
         .glass-panel {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
+            background: #222222;
+            border: 2px solid #1DCD9F;
+            border-radius: 4px;
             padding: 16px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 0 2px #169976, 0 8px 32px rgba(0, 0, 0, 0.8);
         }
         .shared-panel {
             margin-top: 12px;
@@ -202,13 +206,14 @@
             justify-content: flex-end;
         }
         .shared-panel button {
-            border-radius: 6px;
-            border: 1px solid rgba(56, 189, 248, 0.4);
-            background: rgba(56, 189, 248, 0.2);
-            color: var(--accent-color);
+            border-radius: 4px;
+            border: 2px solid #169976;
+            background: #1DCD9F;
+            color: #000000;
             padding: 8px 16px;
             cursor: pointer;
             font-weight: 600;
+            box-shadow: 0 4px 0 #169976, 0 0 0 2px #000000;
         }
 
         h1 {
@@ -218,7 +223,7 @@
             color: var(--accent-color);
             text-transform: uppercase;
             letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+            text-shadow: 2px 2px 0 #000000, 4px 4px 0 #169976;
         }
 
         #stats {
@@ -261,18 +266,16 @@
         .winner-title {
             font-size: 3rem;
             margin-bottom: 10px;
-            background: linear-gradient(45deg, #facc15, #f59e0b);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.5));
+            color: #1DCD9F;
+            text-shadow: 2px 2px 0 #000000, 4px 4px 0 #169976, 0 0 20px rgba(29, 205, 159, 0.5);
         }
 
         .winner-name {
             font-size: 4rem;
             font-weight: 800;
             margin: 0;
-            color: white;
+            color: #1DCD9F;
+            text-shadow: 2px 2px 0 #000000, 4px 4px 0 #169976;
         }
     </style>
 </head>
@@ -321,13 +324,25 @@
             { type: 'rect', x: 700, y: 700, width: 400, height: 250, color: 'rgba(17, 24, 39, 0.45)' }
         ];
 
+        // 맵 크기 계산 함수 (인원수에 따라, 10명마다 변화, 최대 30명)
+        function calculateMapRadius(entityCount) {
+            const tier = Math.min(Math.floor(entityCount / 10), 3); // 0, 1, 2, 3 (최대 30명)
+            const baseRadius = 3000; // 기본 반경
+            const radiusPerTier = 1000; // 10명마다 1000씩 증가
+            return baseRadius + (tier * radiusPerTier);
+        }
+
         const CONFIG = {
             entityCount: CHARACTER_NAMES.length,
             initialItemCount: 15, // 초기 아이템 수를 늘려 초반 자원 강화
-            mapRadius: 5000, // 원형 맵 반경 (훨씬 크게)
+            get mapRadius() { 
+                return calculateMapRadius(this.entityCount); 
+            },
             safeZone: {
-                startDelay: 30, // 자기장 시작 지연 시간 (초)
-                initialRadius: 4500, // 초기 자기장 반경
+                startDelay: 10, // 자기장 시작 지연 시간 (초)
+                get initialRadius() {
+                    return CONFIG.mapRadius * 0.9; // 맵 크기의 90%
+                },
                 shrinkRate: 2.0, // 초당 좁혀지는 비율 (훨씬 더 빨리)
                 damagePerSecond: 5 // 자기장 밖 데미지
             },
@@ -348,7 +363,7 @@
         class SoundManager {
             constructor() {
                 this.audioContext = null;
-                this.masterVolume = 0.4;
+                this.masterVolume = 0.32; // 80%로 감소 (0.4 * 0.8 = 0.32)
                 this.initialized = false;
                 this.init();
             }
@@ -375,7 +390,7 @@
                 }
             }
 
-            playTone(frequency, duration, type = 'sine', volume = 0.1) {
+            playTone(frequency, duration, type = 'sine', volume = 0.1, distance = 0) {
                 if (!this.audioContext) return;
 
                 // 오디오 컨텍스트가 suspended 상태면 resume 시도
@@ -394,8 +409,12 @@
                     oscillator.frequency.value = frequency;
                     oscillator.type = type;
 
+                    // 거리 기반 볼륨 조절 (최대 거리 1000, 그 이상은 거의 안 들림)
+                    const maxDistance = 1000;
+                    const distanceVolume = distance > 0 ? Math.max(0.1, 1 - (distance / maxDistance)) : 1;
+
                     gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-                    gainNode.gain.linearRampToValueAtTime(volume * this.masterVolume, this.audioContext.currentTime + 0.01);
+                    gainNode.gain.linearRampToValueAtTime(volume * this.masterVolume * distanceVolume, this.audioContext.currentTime + 0.01);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
 
                     oscillator.start(this.audioContext.currentTime);
@@ -405,42 +424,42 @@
                 }
             }
 
-            playAttack() {
-                this.playTone(400, 0.1, 'square', 0.15);
+            playAttack(distance = 0) {
+                this.playTone(400, 0.1, 'square', 0.15, distance);
             }
 
-            playHit() {
-                this.playTone(200, 0.15, 'sawtooth', 0.2);
+            playHit(distance = 0) {
+                this.playTone(200, 0.15, 'sawtooth', 0.2, distance);
             }
 
-            playDeath() {
+            playDeath(distance = 0) {
                 const freq = 150;
-                this.playTone(freq, 0.3, 'sawtooth', 0.25);
-                setTimeout(() => this.playTone(freq * 0.5, 0.2, 'sawtooth', 0.2), 100);
+                this.playTone(freq, 0.3, 'sawtooth', 0.25, distance);
+                setTimeout(() => this.playTone(freq * 0.5, 0.2, 'sawtooth', 0.2, distance), 100);
             }
 
-            playItemPickup() {
-                this.playTone(600, 0.1, 'sine', 0.15);
-                setTimeout(() => this.playTone(800, 0.1, 'sine', 0.15), 50);
+            playItemPickup(distance = 0) {
+                this.playTone(600, 0.1, 'sine', 0.15, distance);
+                setTimeout(() => this.playTone(800, 0.1, 'sine', 0.15, distance), 50);
             }
 
-            playKill() {
-                this.playTone(500, 0.1, 'square', 0.2);
-                setTimeout(() => this.playTone(700, 0.1, 'square', 0.2), 50);
-                setTimeout(() => this.playTone(900, 0.1, 'square', 0.2), 100);
+            playKill(distance = 0) {
+                this.playTone(500, 0.1, 'square', 0.2, distance);
+                setTimeout(() => this.playTone(700, 0.1, 'square', 0.2, distance), 50);
+                setTimeout(() => this.playTone(900, 0.1, 'square', 0.2, distance), 100);
             }
 
-            playZoneDamage() {
-                this.playTone(150, 0.2, 'sawtooth', 0.15);
+            playZoneDamage(distance = 0) {
+                this.playTone(150, 0.2, 'sawtooth', 0.15, distance);
             }
 
             playZoneWarning() {
                 this.playTone(300, 0.3, 'sine', 0.1);
             }
 
-            playCombatStart() {
-                this.playTone(400, 0.15, 'square', 0.18);
-                setTimeout(() => this.playTone(500, 0.1, 'square', 0.15), 50);
+            playCombatStart(distance = 0) {
+                this.playTone(400, 0.15, 'square', 0.18, distance);
+                setTimeout(() => this.playTone(500, 0.1, 'square', 0.15, distance), 50);
             }
 
             playMovement() {
@@ -550,10 +569,14 @@
         class SafeZone {
             constructor() {
                 this.center = new Vector2(0, 0); // 맵 중심
-                this.radius = CONFIG.safeZone.initialRadius;
-                this.targetRadius = CONFIG.safeZone.initialRadius;
+                this.radius = CONFIG.safeZone.initialRadius; // getter 사용
+                this.targetRadius = CONFIG.safeZone.initialRadius; // getter 사용
                 this.active = false; // 자기장 활성화 여부
                 this.startTime = 0;
+            }
+            
+            getInitialRadius() {
+                return CONFIG.safeZone.initialRadius; // getter 호출
             }
 
             update(game) {
@@ -581,7 +604,7 @@
                 
                 // 두 가지 요소를 결합하여 자기장 크기 결정 (최대 0.9까지 좁혀짐)
                 const totalShrink = Math.min(0.9, timeShrink + playerShrink);
-                this.targetRadius = Math.max(minRadius, CONFIG.safeZone.initialRadius * (1 - totalShrink));
+                this.targetRadius = Math.max(minRadius, this.getInitialRadius() * (1 - totalShrink));
                 
                 // 부드럽게 좁혀짐 (더 빠르게)
                 const shrinkSpeed = 0.15; // 고정된 속도로 빠르게
@@ -598,7 +621,7 @@
                 if (!this.active) return;
 
                 // 자기장 경계선
-                ctx.strokeStyle = '#ef4444';
+                ctx.strokeStyle = '#169976';
                 ctx.lineWidth = 8;
                 ctx.setLineDash([10, 5]);
                 ctx.beginPath();
@@ -607,7 +630,7 @@
                 ctx.setLineDash([]);
 
                 // 자기장 외부 영역 표시
-                ctx.fillStyle = 'rgba(239, 68, 68, 0.1)';
+                ctx.fillStyle = 'rgba(22, 153, 118, 0.1)';
                 ctx.beginPath();
                 ctx.arc(this.center.x, this.center.y, this.radius + 50, 0, Math.PI * 2);
                 ctx.fill();
@@ -829,8 +852,10 @@
                 this.type = type; // 'arrow', 'bullet', 'magic', 'grenade', 'cannon'
                 this.active = true;
                 this.damage = damageOverride != null ? damageOverride : owner.damage;
-                this.life = 100;
+                this.life = 50; // 발사체 수명 단축
                 this.isExplosive = (type === 'grenade' || type === 'cannon');
+                this.isPiercing = (type === 'arrow'); // 활은 관통 효과
+                this.hitTargets = []; // 관통 시 이미 맞은 적 추적
 
                 if (this.isExplosive) {
                     this.vel.mult(0.5);
@@ -850,11 +875,17 @@
                     // Check collision
                     for (let other of game.characters) {
                         if (other === this.owner || !other.alive) continue;
+                        if (this.hitTargets.includes(other)) continue; // 이미 맞은 적은 스킵
                         if (distance(this.pos, other.pos) < other.size + 5) {
                             other.takeDamage(this.damage, this.owner, game);
-                            this.active = false;
+                            this.hitTargets.push(other); // 맞은 적 기록
                             game.addParticle(this.pos.x, this.pos.y, '#fff', 5);
-                            break;
+                            
+                            // 관통 효과: 활은 최대 2명까지 관통, 다른 투사체는 첫 적 맞으면 종료
+                            if (!this.isPiercing || this.hitTargets.length >= 2) {
+                                this.active = false;
+                                break;
+                            }
                         }
                     }
                 }
@@ -880,7 +911,7 @@
             }
 
             draw(ctx) {
-                ctx.fillStyle = this.type === 'magic' ? '#d946ef' : '#fff';
+                ctx.fillStyle = this.type === 'magic' ? '#1DCD9F' : '#1DCD9F';
                 ctx.beginPath();
                 if (this.isExplosive) {
                     ctx.arc(this.pos.x, this.pos.y, 6, 0, Math.PI * 2);
@@ -927,14 +958,14 @@
         };
 
         const ITEM_TYPES = {
-            HEALTH: { type: 'consumable', name: '체력 물약', color: '#22c55e', effect: (c, g) => { c.health = Math.min(c.health + 50, c.maxHealth); g.addFloatingText('+50 체력', c.pos.x, c.pos.y, '#22c55e'); } },
+            HEALTH: { type: 'consumable', name: '체력 물약', color: '#1DCD9F', effect: (c, g) => { c.health = Math.min(c.health + 50, c.maxHealth); g.addFloatingText('+50 체력', c.pos.x, c.pos.y, '#1DCD9F'); } },
             STRENGTH: { type: 'buff', name: '분노 주사기', color: '#eab308', buffKey: 'RAGE' },
             SPEED: { type: 'buff', name: '가속 부츠', color: '#3b82f6', buffKey: 'HASTE' },
-            BOW: { type: 'weapon', name: '활', color: '#a8a29e', range: 300, cooldown: 40, damage: 15, projectile: 'arrow' },
-            GUN: { type: 'weapon', name: '소총', color: '#475569', range: 400, cooldown: 10, damage: 6, projectile: 'bullet' },
-            STAFF: { type: 'weapon', name: '마법 지팡이', color: '#8b5cf6', range: 340, cooldown: 50, damage: 25, projectile: 'magic' },
-            CANNON: { type: 'weapon', name: '대포', color: '#166534', range: 200, cooldown: 80, damage: 30, projectile: 'cannon' },
-            TRAP: { type: 'trap', name: '지뢰', color: '#ef4444', damage: 40 },
+            PISTOL: { type: 'weapon', name: '권총', color: '#cbd5e1', range: 350, cooldown: 30, damage: 15, projectile: 'bullet' },
+            GUN: { type: 'weapon', name: '소총', color: '#475569', range: 400, cooldown: 20, damage: 14, projectile: 'bullet' },
+            STAFF: { type: 'weapon', name: '마법 지팡이', color: '#8b5cf6', range: 340, cooldown: 50, damage: 22, projectile: 'magic' },
+            CANNON: { type: 'weapon', name: '대포', color: '#166534', range: 300, cooldown: 80, damage: 30, projectile: 'cannon' },
+            TRAP: { type: 'trap', name: '지뢰', color: '#169976', damage: 40 },
             ARMOR: { type: 'passive', name: '방패', color: '#64748b', effect: (c, g) => { c.defense += 0.1; g.addFloatingText('+방어력', c.pos.x, c.pos.y, '#64748b'); } },
             FRENZY_SERUM: { type: 'buff', name: '광폭 혈청', color: '#fb7185', buffKey: 'RAGE' },
             HASTE_STIM: { type: 'buff', name: '가속 주입기', color: '#38bdf8', buffKey: 'HASTE' },
@@ -942,7 +973,7 @@
             REGEN_DRONE: { type: 'buff', name: '치유 드론', color: '#4ade80', buffKey: 'REGEN' }
         };
 
-        const ITEM_LOOT_KEYS = Object.keys(ITEM_TYPES).filter(key => key !== 'SWORD');
+        const ITEM_LOOT_KEYS = Object.keys(ITEM_TYPES).filter(key => key !== 'SWORD' && key !== 'BOW');
 
         class Item {
             constructor(id, x, y, forcedType = null) {
@@ -976,8 +1007,8 @@
                 this.exploding = false;
                 this.timer = 0;
 
-                game.addParticle(this.pos.x, this.pos.y, '#ef4444', 20);
-                game.addFloatingText('폭발!', this.pos.x, this.pos.y - 20, '#ef4444');
+                game.addParticle(this.pos.x, this.pos.y, '#169976', 20);
+                game.addFloatingText('폭발!', this.pos.x, this.pos.y - 20, '#169976');
 
                 game.characters.forEach(char => {
                     if (!char.alive) return;
@@ -991,43 +1022,68 @@
                 if (!this.active) return;
                 const floatY = Math.sin(time * 3 + this.floatOffset) * 4;
 
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = this.data.color;
-
-                ctx.fillStyle = this.data.color;
-
                 if (this.data.type === 'trap') {
                     // Draw X for trap
-                    ctx.beginPath();
-                    ctx.moveTo(this.pos.x - 5, this.pos.y - 5);
-                    ctx.lineTo(this.pos.x + 5, this.pos.y + 5);
-                    ctx.moveTo(this.pos.x + 5, this.pos.y - 5);
-                    ctx.lineTo(this.pos.x - 5, this.pos.y + 5);
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = this.data.color;
                     ctx.strokeStyle = this.data.color;
                     ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(this.pos.x - 8, this.pos.y - 8);
+                    ctx.lineTo(this.pos.x + 8, this.pos.y + 8);
+                    ctx.moveTo(this.pos.x + 8, this.pos.y - 8);
+                    ctx.lineTo(this.pos.x - 8, this.pos.y + 8);
                     ctx.stroke();
 
                     if (this.exploding) {
-                        ctx.strokeStyle = '#ffffff';
+                        ctx.strokeStyle = '#1DCD9F';
                         ctx.setLineDash([3, 3]);
                         ctx.beginPath();
                         ctx.arc(this.pos.x, this.pos.y, 40 + Math.sin(time * 10) * 10, 0, Math.PI * 2);
                         ctx.stroke();
                         ctx.setLineDash([]);
                     }
+                    ctx.shadowBlur = 0;
                 } else {
+                    // 아이템 박스 디자인
+                    const boxSize = 20;
+                    const boxY = this.pos.y + floatY;
+                    
+                    // 박스 배경
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(this.pos.x - boxSize/2, boxY - boxSize/2, boxSize, boxSize);
+                    
+                    // 박스 테두리 (발광 효과)
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = this.data.color;
+                    ctx.strokeStyle = this.data.color;
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(this.pos.x - boxSize/2, boxY - boxSize/2, boxSize, boxSize);
+                    
+                    // 내부 아이콘/원
+                    ctx.fillStyle = this.data.color;
                     ctx.beginPath();
-                    ctx.arc(this.pos.x, this.pos.y + floatY, this.size, 0, Math.PI * 2);
+                    ctx.arc(this.pos.x, boxY, 6, 0, Math.PI * 2);
                     ctx.fill();
+                    
+                    // 펄스 효과
+                    const pulse = Math.sin(time * 5 + this.floatOffset) * 0.3 + 0.7;
+                    ctx.globalAlpha = pulse;
+                    ctx.strokeStyle = this.data.color;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.arc(this.pos.x, boxY, 8, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.globalAlpha = 1.0;
+                    
+                    ctx.shadowBlur = 0;
                 }
 
-                ctx.shadowBlur = 0;
-
                 // Label
-                ctx.fillStyle = '#fff';
+                ctx.fillStyle = '#1DCD9F';
                 ctx.font = '10px Outfit';
                 ctx.textAlign = 'center';
-                ctx.fillText(this.data.name, this.pos.x, this.pos.y - 15 + floatY);
+                ctx.fillText(this.data.name, this.pos.x, this.pos.y - 25 + floatY);
             }
         }
 
@@ -1044,7 +1100,7 @@
                 this.health = this.maxHealth;
                 this.damage = 10;
                 this.defense = 0;
-                this.weapon = ITEM_TYPES.SWORD; // 기본 무기: 칼
+                this.weapon = ITEM_TYPES.PISTOL; // 기본 무기: 권총
                 this.detectRange = 800; // 감지 범위 증가 (더 적극적으로)
                 this.cooldown = 0;
                 this.maxCooldown = 30;
@@ -1075,8 +1131,8 @@
                 const name = this.weapon.name;
                 if (name.includes('칼')) {
                     this.weaponSpeedMultiplier = 1.1; // 칼은 맨손보다 약간 느리지만 빠름
-                } else if (name.includes('활')) {
-                    this.weaponSpeedMultiplier = 1.0;
+                } else if (name.includes('권총')) {
+                    this.weaponSpeedMultiplier = 0.85; // 권총은 소총보다 느림
                 } else if (name.includes('소총')) {
                     this.weaponSpeedMultiplier = 0.8;
                 } else if (name.includes('마법')) {
@@ -1109,6 +1165,16 @@
                 const dist = distance(this.pos, new Vector2(camX, camY));
                 return dist < Math.max(viewWidth, viewHeight) * 0.8;
             }
+            
+            // 카메라와의 거리 계산
+            getDistanceToCamera(camera) {
+                if (!camera || !camera.focusTarget) return 0;
+                const viewWidth = camera.width / camera.zoom;
+                const viewHeight = camera.height / camera.zoom;
+                const camX = camera.x + viewWidth / 2;
+                const camY = camera.y + viewHeight / 2;
+                return distance(this.pos, new Vector2(camX, camY));
+            }
 
             update(game) {
                 if (!this.alive) return;
@@ -1138,7 +1204,8 @@
                     
                     // 자기장 데미지 사운드 (줌된 화면 안에 있을 때만)
                     if (this.isInCameraView(game.camera) && Math.random() < 0.1) {
-                        soundManager.playZoneDamage();
+                        const dist = this.getDistanceToCamera(game.camera);
+                        soundManager.playZoneDamage(dist);
                     }
                 }
 
@@ -1297,7 +1364,8 @@
                 if (nearestEnemy && nearestDist < attackRange) {
                     // 전투 시작 사운드 (상태가 변경될 때만, 줌된 화면 안에 있을 때만)
                     if (this.state !== 'attack' && (this.isInCameraView(game.camera) || nearestEnemy.isInCameraView(game.camera))) {
-                        soundManager.playCombatStart();
+                        const dist = Math.min(this.getDistanceToCamera(game.camera), nearestEnemy.getDistanceToCamera(game.camera));
+                        soundManager.playCombatStart(dist);
                     }
                     this.state = 'attack';
                     this.target = nearestEnemy;
@@ -1398,11 +1466,12 @@
                     // Ranged Attack
                     let projectileDamage = attackDamage;
                     if (this.weapon.name === '소총') {
-                        projectileDamage *= 0.5; // 요청: 표시값 대비 절반 대미지 적용
+                        projectileDamage *= 0.6; // 소폭 버프: 0.5 -> 0.6으로 완화
                     }
                     game.projectiles.push(new Projectile(this, this.pos.x, this.pos.y, target, this.weapon.projectile, projectileDamage));
                     if (this.isInCameraView(game.camera) || target.isInCameraView(game.camera)) {
-                        soundManager.playAttack();
+                        const dist = Math.min(this.getDistanceToCamera(game.camera), target.getDistanceToCamera(game.camera));
+                        soundManager.playAttack(dist);
                     }
                 } else {
                     // Melee Attack (칼 또는 무기 없음)
@@ -1411,7 +1480,8 @@
                     const dir = target.pos.copy().sub(this.pos).normalize().mult(8);
                     this.vel.add(dir);
                     if (this.isInCameraView(game.camera) || target.isInCameraView(game.camera)) {
-                        soundManager.playAttack();
+                        const dist = Math.min(this.getDistanceToCamera(game.camera), target.getDistanceToCamera(game.camera));
+                        soundManager.playAttack(dist);
                     }
                 }
             }
@@ -1419,9 +1489,10 @@
             takeDamage(amount, attacker, game) {
                 const actualDamage = amount * (1 - this.defense);
                 this.health -= actualDamage;
-                game.addFloatingText(Math.floor(actualDamage), this.pos.x, this.pos.y - 20, '#ef4444');
+                game.addFloatingText(Math.floor(actualDamage), this.pos.x, this.pos.y - 20, '#169976');
                 if (this.isInCameraView(game.camera) || (attacker && attacker.isInCameraView && attacker.isInCameraView(game.camera))) {
-                    soundManager.playHit();
+                    const dist = Math.min(this.getDistanceToCamera(game.camera), attacker ? attacker.getDistanceToCamera(game.camera) : Infinity);
+                    soundManager.playHit(dist);
                 }
 
                 // 매직 지팡이 공격 시 20% 확률로 스턴
@@ -1444,7 +1515,8 @@
                 game.addFloatingText("전리품 드랍!", this.pos.x, this.pos.y - 40, '#facc15');
                 game.addParticle(this.pos.x, this.pos.y, '#facc15', 15);
                 if (this.isInCameraView(game.camera)) {
-                    soundManager.playKill();
+                    const dist = this.getDistanceToCamera(game.camera);
+                    soundManager.playKill(dist);
                 }
             }
 
@@ -1452,7 +1524,7 @@
                 if (!trap.active || trap.exploding) return;
                 trap.exploding = true;
                 trap.timer = 180; // 3초 후 폭발
-                game.addFloatingText("지뢰 작동!", trap.pos.x, trap.pos.y - 20, '#ef4444');
+                game.addFloatingText("지뢰 작동!", trap.pos.x, trap.pos.y - 20, '#169976');
             }
 
             consumeItem(item, game) {
@@ -1462,19 +1534,22 @@
                 if (data.type === 'consumable' || data.type === 'passive') {
                     data.effect(this, game);
                     if (this.isInCameraView(game.camera)) {
-                        soundManager.playItemPickup();
+                        const dist = this.getDistanceToCamera(game.camera);
+                        soundManager.playItemPickup(dist);
                     }
                 } else if (data.type === 'weapon') {
                     this.weapon = data;
                     this.updateWeaponSpeed();
                     game.addFloatingText(`${data.name} 장착`, this.pos.x, this.pos.y - 30, '#fff');
                     if (this.isInCameraView(game.camera)) {
-                        soundManager.playItemPickup();
+                        const dist = this.getDistanceToCamera(game.camera);
+                        soundManager.playItemPickup(dist);
                     }
                 } else if (data.type === 'buff' && data.buffKey) {
                     this.addBuff(data.buffKey, game);
                     if (this.isInCameraView(game.camera)) {
-                        soundManager.playItemPickup();
+                        const dist = this.getDistanceToCamera(game.camera);
+                        soundManager.playItemPickup(dist);
                     }
                 }
             }
@@ -1485,7 +1560,8 @@
                     game.addParticle(this.pos.x, this.pos.y, this.color, 10);
                 }
                 if (this.isInCameraView(game.camera)) {
-                    soundManager.playDeath();
+                    const dist = this.getDistanceToCamera(game.camera);
+                    soundManager.playDeath(dist);
                 }
                 // Drop loot? Maybe just simple for now.
                 game.checkWinCondition();
@@ -1494,40 +1570,66 @@
             draw(ctx) {
                 if (!this.alive) return;
 
+                // 캐릭터 발광 효과 (개성)
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = this.color;
+                
                 // Weapon Visual
                 if (this.weapon) {
                     ctx.save();
                     ctx.translate(this.pos.x, this.pos.y);
                     ctx.rotate(this.facingAngle);
                     ctx.fillStyle = this.weapon.color;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = this.weapon.color;
                     ctx.fillRect(10, -2, 15, 4);
                     ctx.restore();
                 }
 
-                // Body
+                // Body - 개성있는 디자인
+                const glowIntensity = 0.6 + Math.sin(Date.now() * 0.005 + this.id) * 0.2;
+                ctx.globalAlpha = glowIntensity;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.pos.x, this.pos.y, this.size + 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+                
+                // 내부 코어
                 ctx.fillStyle = this.color;
                 ctx.beginPath();
                 ctx.arc(this.pos.x, this.pos.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
+                
+                // 외곽 링 (회전 효과 느낌)
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(this.pos.x, this.pos.y, this.size + 5, 0, Math.PI * 2);
+                ctx.stroke();
 
                 // Shield visual
                 if (this.defense > 0) {
-                    ctx.strokeStyle = '#64748b';
+                    ctx.strokeStyle = '#169976';
                     ctx.lineWidth = 2;
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = '#169976';
                     ctx.beginPath();
                     ctx.arc(this.pos.x, this.pos.y, this.size + 4, 0, Math.PI * 2);
                     ctx.stroke();
                 }
 
+                ctx.shadowBlur = 0;
+
                 // Health bar
                 const hpPct = this.health / this.maxHealth;
-                ctx.fillStyle = '#334155';
+                ctx.fillStyle = '#000000';
                 ctx.fillRect(this.pos.x - 15, this.pos.y - 25, 30, 4);
-                ctx.fillStyle = hpPct > 0.5 ? '#22c55e' : '#ef4444';
+                ctx.fillStyle = hpPct > 0.5 ? '#1DCD9F' : '#169976';
                 ctx.fillRect(this.pos.x - 15, this.pos.y - 25, 30 * hpPct, 4);
 
                 // Name & Weapon
-                ctx.fillStyle = '#fff';
+                ctx.fillStyle = '#1DCD9F';
                 ctx.font = '10px Outfit';
                 ctx.textAlign = 'center';
                 const weaponName = this.weapon ? `[${this.weapon.name}]` : '';
@@ -1537,14 +1639,14 @@
                     ctx.font = '12px Outfit';
                     this.activeBuffs.forEach((buff, idx) => {
                         const offset = (idx - (this.activeBuffs.length - 1) / 2) * 14;
-                        ctx.fillStyle = buff.color || '#e2e8f0';
+                        ctx.fillStyle = buff.color || '#1DCD9F';
                         ctx.fillText(buff.icon, this.pos.x + offset, this.pos.y - 40);
                     });
                 }
                 
                 // 스턴 상태 표시
                 if (this.stunned) {
-                    ctx.fillStyle = '#8b5cf6';
+                    ctx.fillStyle = '#1DCD9F';
                     ctx.font = 'bold 12px Outfit';
                     ctx.fillText('⚡ 스턴', this.pos.x, this.pos.y + 45);
                 }
@@ -1765,34 +1867,54 @@
             }
 
             draw() {
-                // Clear
-                this.ctx.fillStyle = '#0f172a';
+                // Clear with space background
+                this.ctx.fillStyle = '#000000';
                 this.ctx.fillRect(0, 0, this.width, this.height);
 
+                // 카메라 변환 적용 전에 배경을 맵 좌표계로 그리기
                 this.camera.apply(this.ctx);
 
-                // Draw Map Boundaries (원형)
-                this.ctx.strokeStyle = '#334155';
-                this.ctx.lineWidth = 5;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, CONFIG.mapRadius, 0, Math.PI * 2);
-                this.ctx.stroke();
+                // 우주 배경 - 별들 (맵에 고정)
+                this.ctx.fillStyle = '#1DCD9F';
+                const starCount = 200;
+                for (let i = 0; i < starCount; i++) {
+                    const angle = (i / starCount) * Math.PI * 2;
+                    const dist = 500 + (i % 5) * 800; // 맵 전체에 분산
+                    const x = Math.cos(angle) * dist;
+                    const y = Math.sin(angle) * dist;
+                    const size = (i % 3 === 0 ? 1.5 : 1) * (0.5 + Math.sin(this.time * 2 + i) * 0.3);
+                    this.ctx.globalAlpha = 0.6 + Math.sin(this.time * 3 + i) * 0.3;
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+                this.ctx.globalAlpha = 1.0;
 
-                // Grid (원형 그리드)
-                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+                // 우주 배경 - 원형 격자 (넓게, 맵에 고정)
+                this.ctx.strokeStyle = 'rgba(22, 153, 118, 0.15)';
                 this.ctx.lineWidth = 1;
-                const gridSize = 500;
-                for (let r = gridSize; r < CONFIG.mapRadius; r += gridSize) {
+                const gridSize = 800;
+                for (let r = gridSize; r < CONFIG.mapRadius * 2; r += gridSize) {
                     this.ctx.beginPath();
                     this.ctx.arc(0, 0, r, 0, Math.PI * 2);
                     this.ctx.stroke();
                 }
-                for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
+                for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 6) {
                     this.ctx.beginPath();
                     this.ctx.moveTo(0, 0);
-                    this.ctx.lineTo(Math.cos(angle) * CONFIG.mapRadius, Math.sin(angle) * CONFIG.mapRadius);
+                    this.ctx.lineTo(Math.cos(angle) * CONFIG.mapRadius * 2, Math.sin(angle) * CONFIG.mapRadius * 2);
                     this.ctx.stroke();
                 }
+
+                // Draw Map Boundaries (원형) - 우주 느낌
+                this.ctx.strokeStyle = '#1DCD9F';
+                this.ctx.lineWidth = 3;
+                this.ctx.shadowBlur = 20;
+                this.ctx.shadowColor = '#1DCD9F';
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, CONFIG.mapRadius, 0, Math.PI * 2);
+                this.ctx.stroke();
+                this.ctx.shadowBlur = 0;
 
                 // Terrain features
                 TERRAIN_FEATURES.forEach(feature => {
@@ -1875,7 +1997,7 @@
                     mm.fill('evenodd');
                     
                     // 자기장 경계선
-                    mm.strokeStyle = '#ef4444';
+                    mm.strokeStyle = '#169976';
                     mm.lineWidth = 3;
                     mm.setLineDash([5, 5]);
                     mm.beginPath();

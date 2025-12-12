@@ -10,22 +10,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer></script>
     <style>
         :root {
-            --bg: #050b24;
-            --maze-bg: #10163a;
-            --wall: #1f2c5c;
+            --bg: #000000;
+            --maze-bg: #222222;
+            --wall: #169976;
             --grid-size: 27;
             --cell: 38px;
-            --pacman: #ffd447;
-            --runner: #73f7ff;
-            --danger: #ff7b95;
+            --pacman: #1DCD9F;
+            --runner: #1DCD9F;
+            --danger: #169976;
         }
         * { box-sizing: border-box; }
         body {
             margin: 0;
             min-height: 100vh;
             font-family: 'Do Hyeon', sans-serif;
-            background: radial-gradient(circle at top, #262f6a, var(--bg));
-            color: #eef4ff;
+            background: #000000;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, #222222 2px, #222222 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, #222222 2px, #222222 4px);
+            background-size: 20px 20px;
+            color: #1DCD9F;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -39,42 +43,43 @@
             align-items: start;
         }
         .panel, .maze-shell {
-            background: rgba(9, 13, 38, 0.88);
-            border-radius: 28px;
-            border: 1px solid rgba(255,255,255,0.06);
-            box-shadow: 0 30px 90px rgba(0,0,0,0.55);
+            background: #222222;
+            border-radius: 4px;
+            border: 3px solid #1DCD9F;
+            box-shadow: 0 0 0 2px #169976, 0 8px 32px rgba(0, 0, 0, 0.8);
             padding: 30px;
-            backdrop-filter: blur(14px);
         }
         .panel h1 {
             margin: 0 0 10px;
             font-size: 34px;
+            color: #1DCD9F;
+            text-shadow: 2px 2px 0 #000000, 4px 4px 0 #169976;
         }
         .panel p {
             margin: 0 0 18px;
-            color: #a4b9ff;
+            color: #1DCD9F;
             line-height: 1.4;
         }
         .shared-banner {
-            background: rgba(17, 24, 64, 0.85);
-            border: 1px solid rgba(94, 234, 212, 0.3);
-            border-radius: 18px;
+            background: #000000;
+            border: 2px solid #1DCD9F;
+            border-radius: 4px;
             padding: 12px 18px;
             margin-bottom: 18px;
             display: flex;
             justify-content: flex-end;
         }
         .shared-banner button {
-            border-radius: 999px;
-            border: none;
+            border-radius: 4px;
+            border: 2px solid #169976;
             padding: 10px 18px;
             font-weight: 600;
             cursor: pointer;
         }
         .shared-banner .primary {
-            background: linear-gradient(135deg, #5eead4, #3b82f6);
-            color: #031022;
-            box-shadow: 0 10px 20px rgba(94, 234, 212, 0.3);
+            background: #1DCD9F;
+            color: #000000;
+            box-shadow: 0 4px 0 #169976, 0 0 0 2px #000000;
         }
         .controls {
             display: flex;
@@ -94,20 +99,23 @@
         }
         button:disabled { opacity: 0.45; cursor: not-allowed; }
         .start-btn {
-            background: linear-gradient(135deg, #72f5ff, #27bfff);
-            color: #081025;
-            box-shadow: 0 15px 35px rgba(39,191,255,0.4);
+            background: #1DCD9F;
+            color: #000000;
+            border: 2px solid #169976;
+            box-shadow: 0 4px 0 #169976, 0 0 0 2px #000000;
         }
         .reset-btn {
-            background: linear-gradient(135deg, #ffb25a, #ff6850);
-            color: #0c0c0c;
-            box-shadow: 0 15px 35px rgba(255,104,80,0.45);
+            background: #222222;
+            color: #1DCD9F;
+            border: 2px solid #1DCD9F;
+            box-shadow: 0 4px 0 #000000;
         }
         .toast {
             min-height: 32px;
-            color: #ffdf7d;
+            color: #1DCD9F;
             font-size: 18px;
             margin-bottom: 16px;
+            text-shadow: 1px 1px 0 #000000;
         }
         .scoreboard {
             display: flex;
@@ -121,21 +129,28 @@
             justify-content: space-between;
             align-items: center;
             padding: 12px 14px;
-            border-radius: 16px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid transparent;
+            border-radius: 4px;
+            background: #000000;
+            border: 2px solid #169976;
+            color: #1DCD9F;
         }
         .scoreboard .entry.targeted {
-            border-color: rgba(255, 212, 71, 0.6);
-            color: #ffe083;
+            border-color: #1DCD9F;
+            background: #222222;
+            color: #1DCD9F;
+            box-shadow: 0 0 0 2px #169976;
         }
         .scoreboard .entry.out {
-            border-color: rgba(255, 107, 149, 0.55);
-            color: #ff8ca3;
+            border-color: #169976;
+            background: #000000;
+            color: #169976;
+            opacity: 0.6;
         }
         .scoreboard .entry.winner {
-            border-color: rgba(255, 212, 71, 0.7);
-            color: #ffe59b;
+            border-color: #1DCD9F;
+            background: #1DCD9F;
+            color: #000000;
+            box-shadow: 0 0 0 2px #169976;
         }
         .maze-shell {
             display: flex;
@@ -146,7 +161,7 @@
         .status-bar {
             display: flex;
             justify-content: space-between;
-            color: #9fb7ff;
+            color: #1DCD9F;
             font-size: 16px;
         }
         #maze {
@@ -156,10 +171,10 @@
             grid-template-rows: repeat(var(--grid-size), var(--cell));
             gap: 4px;
             padding: 14px;
-            border-radius: 26px;
+            border-radius: 4px;
             background: var(--maze-bg);
-            border: 1px solid rgba(255,255,255,0.03);
-            box-shadow: inset 0 0 40px rgba(0,0,0,0.35);
+            border: 3px solid #1DCD9F;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 0 0 2px #169976;
         }
         .actors-layer {
             position: absolute;
@@ -176,7 +191,7 @@
             box-shadow: inset 0 0 8px rgba(0,0,0,0.4);
         }
         .cell.path {
-            background: rgba(255,255,255,0.02);
+            background: #000000;
         }
         .actor {
             position: absolute;
@@ -193,32 +208,33 @@
         }
         .actor.pacman {
             background: var(--pacman);
-            color: #121212;
+            color: #000000;
             border-radius: 50%;
-            box-shadow: 0 12px 35px rgba(255,212,71,0.4);
+            box-shadow: 0 0 0 2px #169976, 0 8px 16px rgba(29, 205, 159, 0.4);
             clip-path: polygon(0% 0%, 100% 0%, 65% 50%, 100% 100%, 0% 100%);
             transform-origin: 50% 50%;
         }
         .actor.runner {
-            background: rgba(115,247,255,0.12);
-            border: 2px solid rgba(115,247,255,0.6);
-            border-radius: 18px;
-            color: #d4f9ff;
+            background: #000000;
+            border: 2px solid #1DCD9F;
+            border-radius: 4px;
+            color: #1DCD9F;
             animation: float 0.9s ease-in-out infinite alternate;
         }
         .actor.runner.danger {
-            border-color: rgba(255,107,149,0.85);
-            color: #ff9fb5;
-            box-shadow: 0 0 20px rgba(255,107,149,0.45);
+            border-color: #169976;
+            color: #169976;
+            box-shadow: 0 0 0 2px #1DCD9F, 0 0 20px rgba(22, 153, 118, 0.6);
         }
         .actor.runner.winner {
-            border-color: rgba(255,212,71,0.9);
-            color: #ffe083;
-            box-shadow: 0 0 30px rgba(255,212,71,0.7);
+            border-color: #1DCD9F;
+            background: #1DCD9F;
+            color: #000000;
+            box-shadow: 0 0 0 2px #169976, 0 0 30px rgba(29, 205, 159, 0.8);
             animation: winnerPulse 1.2s ease-in-out infinite;
         }
         .actor.runner.targeted {
-            box-shadow: 0 0 24px rgba(255,231,130,0.6);
+            box-shadow: 0 0 0 2px #1DCD9F, 0 0 24px rgba(29, 205, 159, 0.6);
         }
         @keyframes winnerPulse {
             0%, 100% { transform: scale(1); }
@@ -242,10 +258,11 @@
             align-items: center;
             justify-content: center;
             pointer-events: none;
+            background: rgba(0, 0, 0, 0.8);
             font-size: clamp(48px, 6vw, 86px);
             font-weight: 700;
-            color: #ffe083;
-            text-shadow: 0 0 30px rgba(255, 208, 96, 0.6), 0 0 60px rgba(255, 208, 96, 0.4);
+            color: #1DCD9F;
+            text-shadow: 2px 2px 0 #000000, 4px 4px 0 #169976, 0 0 30px rgba(29, 205, 159, 0.6);
             opacity: 0;
             transform: scale(0.5) rotate(-5deg);
             transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
