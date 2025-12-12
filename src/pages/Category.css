@@ -124,6 +124,22 @@ body {
   flex-direction: column;
 }
 
+.ff-left-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.ff-clear-btn {
+  background-color: var(--pastel-400);
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
 .ff-left-title {
   margin: 0 0 10px;
   color: var(--dark);
@@ -149,7 +165,7 @@ body {
   padding: 8px 14px;
   border-radius: 10px;
   border: none;
-  background: #ffd75e;
+  background: var(--pastel-200);
   /* font-size: 14px; */
   cursor: pointer;
 }
@@ -167,6 +183,9 @@ body {
 }
 
 .ff-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 6px 8px;
   border-radius: 8px;
   background: #eef5fb;
@@ -177,6 +196,20 @@ body {
 .ff-item-empty {
   /* font-size: 13px; */
   color: #8b9eb4;
+}
+
+.ff-item-delete-btn {
+  border: none;
+  background: var(--pastel-400);
+  color: white;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ff-item-delete-btn:hover {
+  opacity: 0.9;
 }
 
 /* 오른쪽 영역 */
@@ -197,6 +230,7 @@ body {
   justify-content: space-between;
   align-items: center;
   flex-wrap: nowrap; /* 칩 개수가 적으므로 줄바꿈 방지 */
+  gap: 10px;
 }
 
 .ff-chip-grid--4 {
@@ -206,7 +240,7 @@ body {
 }
 
 .ff-chip {
-  width: 155px;
+  width: 100%;
   height: 50px;
   border: none;
   outline: none;
