@@ -1,6 +1,7 @@
 // src/components/Ladder.tsx
 
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
+import "./Ladder.css";
 
 interface LadderProps {
   starters: string[]; // 사다리 출발 항목 (예: 1, 2, 3)
@@ -13,23 +14,62 @@ interface LadderProps {
 
 const RAIL_WIDTH = 100; // 수직선 간격 (픽셀)
 const RAIL_HEIGHT = 400; // 사다리 전체 높이
-const RUNG_COUNT = 15; // 무작위로 생성할 수평선 최대 개수
+const MAX_JITTER = 6; // y좌표 변동 상한선
+const MIN_GAP = 12; // 무작위 생성 수평선 간 최소 간격 픽셀
 
 // 사다리 구조를 무작위로 생성하는 함수
 const generateLadderStructure = (numRails: number) => {
   const rungs: { [key: number]: number[] } = {}; // { railIndex: [rungYPosition, ...] }
-
+  // 각 레일 쌍에 대한 맵 초기화
   for (let i = 0; i < numRails - 1; i++) {
     rungs[i] = [];
-    const maxRungs = Math.floor(Math.random() * RUNG_COUNT) + 5;
+  }
 
-    for (let j = 0; j < maxRungs; j++) {
-      // 50~RAIL_HEIGHT-50 사이의 Y 좌표를 무작위로 선택
-      const y = Math.floor(Math.random() * (RAIL_HEIGHT - 100)) + 50;
-      rungs[i].push(y);
+  // (1) 사다리 전체에서 사용할 Y 좌표 목록을 먼저 생성합니다.
+  const allYPositions: number[] = [];
+  // 최대 RUNG_COUNT (15)의 절반 정도로 총 개수를 제한하는 것이 좋습니다.
+  // 넉넉하게 RAIL_HEIGHT / MIN_GAP 수의 가로대를 생성할 수 있습니다.
+  const maxRungs = Math.floor(RAIL_HEIGHT / (MIN_GAP * 1.5)); // 최대 개수 계산 (예: 400 / 30 = 약 13개)
+  let attempts = 0;
+
+  while (allYPositions.length < maxRungs && attempts < maxRungs * 5) {
+    attempts++;
+
+    // 50 ~ RAIL_HEIGHT - 50 사이의 Y 좌표 선택
+    const y = Math.floor(Math.random() * (RAIL_HEIGHT - 100)) + 50;
+
+    // (2) 기존 Y 좌표 목록과 MIN_GAP 이상 떨어져 있는지 확인
+    const isTooClose = allYPositions.some(
+      (existingY) => Math.abs(existingY - y) < MIN_GAP
+    );
+
+    if (!isTooClose) {
+      allYPositions.push(y);
     }
+  }
+
+  // (3) Y 좌표를 정렬합니다.
+  allYPositions.sort((a, b) => a - b);
+
+  // (4) 생성된 Y 좌표 목록을 사용하여 무작위로 레일 쌍에 할당 + JITTER 적용
+  allYPositions.forEach((y) => {
+    // 0부터 numRails-2 사이의 레일 쌍 중 하나를 무작위로 선택
+    const railIndex = Math.floor(Math.random() * (numRails - 1));
+    // Jitter (무작위 변동) 적용
+    // -MAX_JITTER 부터 +MAX_JITTER 사이의 무작위 값 생성 (예: -10 ~ +10)
+    const jitter =
+      Math.floor(Math.random() * (MAX_JITTER * 2 + 1)) - MAX_JITTER;
+
+    // 변동된 새로운 Y 좌표
+    const newY = y + jitter;
+
+    rungs[railIndex].push(newY);
+  });
+  // (5) railIndex별로 다시 정렬 (newY가 정렬 순서를 바꿀 수 있으므로)
+  for (let i = 0; i < numRails - 1; i++) {
     rungs[i].sort((a, b) => a - b);
   }
+
   return rungs;
 };
 
@@ -181,7 +221,7 @@ export default function Ladder({ starters, results }: LadderProps) {
       {/* 5. SVG 사다리 (중앙에 위치) */}
       <svg
         width={totalWidth}
-        height={RAIL_HEIGHT + 100}
+        height={RAIL_HEIGHT + 100} // 사다리 감싸고 있는 영역 높이
         viewBox={`0 0 ${totalWidth} ${RAIL_HEIGHT + 100}`}
         style={{ order: 2 }}
       >
@@ -190,9 +230,9 @@ export default function Ladder({ starters, results }: LadderProps) {
           <line
             key={`rail-${index}`}
             x1={index * RAIL_WIDTH + RAIL_WIDTH / 2}
-            y1={50} // 오프셋 적용
+            y1={50} // 시작 오프셋
             x2={index * RAIL_WIDTH + RAIL_WIDTH / 2}
-            y2={RAIL_HEIGHT + 50} // 오프셋 적용
+            y2={RAIL_HEIGHT + 50} // 끝 오프셋
             stroke="#aaa"
             strokeWidth="3"
           />
@@ -227,7 +267,7 @@ export default function Ladder({ starters, results }: LadderProps) {
               // 선의 길이 = 실제 경로 길이
               strokeDasharray: actualPathLength,
               // 3초간 애니메이션 적용
-              transition: "stroke-dashoffset 5s linear",
+              transition: "stroke-dashoffset 2s linear",
               // pathLength (length -> 0) 값에 따라 오프셋이 움직임
               strokeDashoffset: pathLength,
             }}

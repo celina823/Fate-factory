@@ -1,0 +1,10 @@
+.ladder-game-wrapper {
+  display: flex;
+  flex-direction: column; 
+  align-items: center; 
+
+.ladder-results {
+  display: flex; 
+  justify-content: space-between; 
+  text-align: center; 
+}

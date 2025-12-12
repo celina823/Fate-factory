@@ -6,6 +6,11 @@ export default function LadderPage() {
   // 1. zustand store에서 룰렛 항목(items)을 가져오기
   const { items: results } = useRouletteItemsStore(); // 이름을 results로 변경하여 사용
 
+  // 2. 출발 항목(starters)을 items의 길이에 맞춰 숫자 1부터 생성
+  const starters = useMemo(() => {
+    return Array.from({ length: results.length }, (_, i) => `${i + 1}`);
+  }, [results.length]); // results.length가 변할 때만 다시 계산
+
   if (results.length === 0) {
     return (
       <div className="ff-page">
@@ -15,11 +20,6 @@ export default function LadderPage() {
       </div>
     );
   }
-
-  // 2. 출발 항목(starters)을 items의 길이에 맞춰 숫자 1부터 생성합니다.
-  const starters = useMemo(() => {
-    return Array.from({ length: results.length }, (_, i) => `${i + 1}`);
-  }, [results.length]); // results.length가 변할 때만 다시 계산
 
   return (
     <div className="ff-page ff-ladder-page">
