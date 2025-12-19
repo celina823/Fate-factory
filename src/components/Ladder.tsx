@@ -175,21 +175,28 @@ export default function Ladder({ starters, results }: LadderProps) {
   const handleStart = (index: number) => {
     setActiveStarterIndex(index);
 
-    // 1. 애니메이션 리셋 및 새 경로 계산
-    setPathResult(null); // polyline 제거 (transition 리셋)
+    // 1. 기존 경로와 길이를 즉시 초기화 (애니메이션 리셋을 위해)
+    setPathResult(null);
+    setPathLength(0);
 
+    // 2. 새 경로 계산
     const result = findResultPath(index, ladderRungs, numRails);
     const length = calculatePathLength(result.path);
 
-    // 2. 애니메이션 초기화: 경로 길이만큼 offset을 설정하여 선을 완전히 숨김
-    setPathLength(length);
-    setPathResult(result);
+    // 3. 브라우저가 리셋된 상태를 한 번 렌더링하도록 유도한 뒤 새 경로 설정
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        // 경로 데이터 삽입 (이 시점에 strokeDashoffset은 이미 0 혹은 이전 값에서 리셋됨)
+        setPathResult(result);
+        // 선을 완전히 숨긴 상태(length)에서 시작
+        setPathLength(length);
 
-    // 3. 애니메이션 시작: 다음 렌더링 사이클에서 offset을 0으로 설정 (3초간 선이 그려짐)
-    setTimeout(() => {
-      // 0으로 설정하면 length -> 0으로 transition이 시작됨
-      setPathLength(0);
-    }, 50); // 렌더링 후 지연 (React의 다음 프레임)
+        // 4. 아주 짧은 지연 후 offset을 0으로 만들어 애니메이션 트리거
+        setTimeout(() => {
+          setPathLength(0);
+        }, 30);
+      });
+    });
   };
 
   const totalWidth = numRails * RAIL_WIDTH;
