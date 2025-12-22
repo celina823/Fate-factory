@@ -10,6 +10,8 @@ export default function Category() {
   const { items, addItem, addPresets, clearItems, removeItem } =
     useRouletteItemsStore();
 
+  const navigate = useNavigate();
+
   const handleCategoryClick = (label: string) => {
     const preset = categoryPresets[label];
     if (!preset) return;
@@ -30,13 +32,38 @@ export default function Category() {
     setInput("");
   };
 
+  // --- 유효성 검사 로직 추가 ---
+  const itemCount = items.length;
+
+  const getValidation = () => {
+    // 1. 컬링 모드 체크
+    if (mode === "컬링") {
+      if (itemCount < 4)
+        return { isValid: false, msg: "항목을 4개 이상 등록해주세요" };
+    }
+    // 2. 사다리타기 모드 체크
+    else if (mode === "사다리타기") {
+      if (itemCount < 4 || itemCount > 15)
+        return { isValid: false, msg: "항목을 4~15개 등록해주세요" };
+    }
+    // 3. 항목이 0개일 때
+    if (itemCount === 0)
+      return { isValid: false, msg: "항목을 먼저 추가해주세요" };
+
+    // 3. 모드 공통 체크
+    if (itemCount < 2) {
+      return { isValid: false, msg: "항목을 2개 이상 등록해주세요" };
+    }
+    return { isValid: true, msg: "" };
+  };
+
+  const { isValid, msg } = getValidation();
+
   const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
     if (e.key === "Enter") {
       handleAdd();
     }
   };
-
-  const navigate = useNavigate();
 
   return (
     <div className="ff-page">
@@ -67,7 +94,8 @@ export default function Category() {
             }`}
             onClick={() => setMode("컬링")}
           >
-            컬링
+            <span className="ff-mode-text">컬링</span>
+            <p className="ff-mode-info">(최소 4인)</p>
           </button>
           <button
             className={`ff-mode-btn ${
@@ -91,7 +119,8 @@ export default function Category() {
             }`}
             onClick={() => setMode("사다리타기")}
           >
-            사다리타기
+            <span className="ff-mode-text">사다리타기</span>
+            <p className="ff-mode-info">(최소 2인 / 최대 15인)</p>
           </button>
         </nav>
 
@@ -170,26 +199,34 @@ export default function Category() {
                 ))}
               </div>
             </div>
-            <button
-              className="ff-start-btn"
-              onClick={() => {
-                const url = modeToUrl[mode];
-                // 1) URL이 존재하지 않음
-                if (!url) {
-                  alert("아직 준비 중인 모드입니다!");
-                  return;
-                }
-
-                // 2) 항목이 비어 있음 → 룰렛 돌릴 내용 없음
-                if (items.length === 0) {
-                  alert("항목을 먼저 추가해주세요!");
-                  return;
-                }
-                navigate(url);
-              }}
+            <div
+              className={`ff-start-btn-wrapper ${
+                !isValid ? "has-tooltip" : ""
+              }`}
+              data-tooltip={msg}
             >
-              내가 고른 룰렛 시작!
-            </button>
+              <button
+                className="ff-start-btn"
+                disabled={!isValid}
+                onClick={() => {
+                  const url = modeToUrl[mode];
+                  // 1) URL이 존재하지 않음
+                  if (!url) {
+                    alert("아직 준비 중인 모드입니다!");
+                    return;
+                  }
+
+                  // 2) 항목이 비어 있음 → 룰렛 돌릴 내용 없음
+                  if (items.length === 0) {
+                    alert("항목을 먼저 추가해주세요!");
+                    return;
+                  }
+                  navigate(url);
+                }}
+              >
+                내가 고른 룰렛 시작!
+              </button>
+            </div>
           </section>
         </main>
       </div>

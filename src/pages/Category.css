@@ -87,7 +87,7 @@ body {
 
 .ff-mode-btn {
   width: 180px;
-  height: 50px;
+  height: 64px;
   border: none;
   outline: none;
   padding: 10px 18px;
@@ -106,6 +106,43 @@ body {
   outline: none;
   background: var(--pastel-200);
   font-weight: 600;
+}
+
+.ff-mode-info {
+  font-size: 0.75rem; /* 메인 텍스트보다 작게 */
+  color: #888; /* 평소에는 연한 회색 */
+  margin-top: 4px; /* 텍스트 사이 간격 */
+  font-weight: normal;
+}
+
+/* 툴팁 디자인 */
+.has-tooltip:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 110%; /* 버튼 위로 띄움 */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 10;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 툴팁 화살표 */
+.has-tooltip:hover::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #333 transparent transparent transparent;
+  z-index: 10;
 }
 
 /* 메인 영역 */
@@ -278,6 +315,22 @@ body {
 .ff-start-btn {
   width: 100%;
   background: var(--pastel-100);
+  color: var(--light);
+  font-weight: 600;
+}
+
+/* 시작 버튼 감싸는 래퍼 (툴팁 위치 기준) */
+.ff-start-btn-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* 시작 버튼 비활성화 스타일 */
+.ff-start-btn:disabled {
+  background: #d9d9d9;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* 반응형 조금만 */
